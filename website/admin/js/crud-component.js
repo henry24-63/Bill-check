@@ -39,11 +39,12 @@ export async function initCrud(containerId, options) {
         </div>
       </div>
 
-      <div id="bulk-actions" style="display: none; margin-bottom: 15px; background: var(--bg); padding: 10px; border-radius: 8px; align-items: center; gap: 10px;">
-        <span id="selected-count">0 selected</span>
-        <button id="bulk-activate" class="btn btn-sm">Activate</button>
-        <button id="bulk-deactivate" class="btn btn-sm btn-outline">Deactivate</button>
-        <button id="bulk-delete" class="btn btn-sm btn-danger">Delete</button>
+      <div id="bulk-actions" style="display: none; margin-bottom: 15px; background: var(--bg); padding: 10px; border-radius: 8px; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <span id="selected-count" style="font-weight: 600;">0 selected</span>
+        <button id="bulk-activate" class="btn btn-sm">Activate Selected</button>
+        <button id="bulk-deactivate" class="btn btn-sm btn-outline">Deactivate Selected</button>
+        <button id="bulk-delete" class="btn btn-sm btn-danger">Delete Selected</button>
+        <button id="bulk-delete-all" class="btn btn-sm btn-danger btn-outline">🗑️ Delete ALL Records</button>
       </div>
 
       <div class="table-responsive">
@@ -194,6 +195,60 @@ export async function initCrud(containerId, options) {
     }
     renderTable();
     updateBulkBar();
+  };
+
+  // Bulk Actions Event Handlers
+  container.querySelector('#bulk-delete').onclick = () => {
+    if (state.selectedIds.size === 0) return;
+    showConfirm(`Delete ${state.selectedIds.size} selected records?`, async () => {
+      try {
+        const { error } = await supabase.from(tableName).delete().in('id', Array.from(state.selectedIds));
+        if (error) throw error;
+        showToast('Selected records deleted successfully!');
+        state.selectedIds.clear();
+        loadData();
+      } catch (err) {
+        showToast(`Bulk delete failed: ${err.message}`, 'error');
+      }
+    });
+  };
+
+  container.querySelector('#bulk-delete-all').onclick = () => {
+    showConfirm(`WARNING: Are you sure you want to DELETE ALL records in ${tableName}? This cannot be undone!`, async () => {
+      try {
+        const { error } = await supabase.from(tableName).delete().gte('id', 0);
+        if (error) throw error;
+        showToast('All records deleted successfully!');
+        state.selectedIds.clear();
+        loadData();
+      } catch (err) {
+        showToast(`Delete all failed: ${err.message}`, 'error');
+      }
+    });
+  };
+
+  container.querySelector('#bulk-activate').onclick = async () => {
+    if (state.selectedIds.size === 0) return;
+    try {
+      const { error } = await supabase.from(tableName).update({ is_active: true }).in('id', Array.from(state.selectedIds));
+      if (error) throw error;
+      showToast('Selected records activated!');
+      loadData();
+    } catch (err) {
+      showToast(`Action failed: ${err.message}`, 'error');
+    }
+  };
+
+  container.querySelector('#bulk-deactivate').onclick = async () => {
+    if (state.selectedIds.size === 0) return;
+    try {
+      const { error } = await supabase.from(tableName).update({ is_active: false }).in('id', Array.from(state.selectedIds));
+      if (error) throw error;
+      showToast('Selected records deactivated!');
+      loadData();
+    } catch (err) {
+      showToast(`Action failed: ${err.message}`, 'error');
+    }
   };
 
   // Modal handlers
