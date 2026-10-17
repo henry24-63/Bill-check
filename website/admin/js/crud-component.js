@@ -338,9 +338,12 @@ export async function initCrud(containerId, options) {
     }
     if (columns.some(c => c.type === 'url' || c.key === 'url')) {
       for (const c of columns) {
-        if ((c.type === 'url' || c.key === 'url') && payload[c.key] && !payload[c.key].startsWith('https://')) {
-          showToast(`Validation Error: ${c.label} must start with https://`, 'error');
-          return;
+        if ((c.type === 'url' || c.key === 'url') && payload[c.key]) {
+          let u = payload[c.key].trim();
+          if (!u.startsWith('http://') && !u.startsWith('https://')) {
+            u = 'https://' + u;
+          }
+          payload[c.key] = u;
         }
       }
     }

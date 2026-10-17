@@ -20,89 +20,89 @@ data class AppConfig(
 
 @JsonClass(generateAdapter = true)
 data class BillLink(
-    @Json(name = "id") val id: Int,
-    @Json(name = "name_en") val nameEn: String,
-    @Json(name = "name_ur") val nameUr: String?,
-    @Json(name = "category") val category: String,
-    @Json(name = "url") val url: String,
-    @Json(name = "logo_url") val logoUrl: String?,
+    @Json(name = "id") val id: Int = 0,
+    @Json(name = "name_en") val nameEn: String = "",
+    @Json(name = "name_ur") val nameUr: String? = null,
+    @Json(name = "category") val category: String = "Electricity",
+    @Json(name = "url") val url: String = "",
+    @Json(name = "logo_url") val logoUrl: String? = null,
     @Json(name = "sort_order") val sortOrder: Int = 0,
     @Json(name = "is_active") val isActive: Boolean = true
 )
 
 @JsonClass(generateAdapter = true)
 data class Helpline(
-    @Json(name = "id") val id: Int,
-    @Json(name = "org_name_en") val orgNameEn: String,
-    @Json(name = "org_name_ur") val orgNameUr: String?,
-    @Json(name = "category") val category: String,
-    @Json(name = "number") val number: String,
-    @Json(name = "notes") val notes: String?,
+    @Json(name = "id") val id: Int = 0,
+    @Json(name = "org_name_en") val orgNameEn: String = "",
+    @Json(name = "org_name_ur") val orgNameUr: String? = null,
+    @Json(name = "category") val category: String = "Emergency",
+    @Json(name = "number") val number: String = "",
+    @Json(name = "notes") val notes: String? = null,
     @Json(name = "sort_order") val sortOrder: Int = 0,
     @Json(name = "is_active") val isActive: Boolean = true
 )
 
 @JsonClass(generateAdapter = true)
 data class PackageCode(
-    @Json(name = "id") val id: Int,
-    @Json(name = "telco") val telco: String,
-    @Json(name = "title_en") val titleEn: String,
-    @Json(name = "title_ur") val titleUr: String?,
-    @Json(name = "ussd_code") val ussdCode: String,
-    @Json(name = "description") val description: String?,
+    @Json(name = "id") val id: Int = 0,
+    @Json(name = "telco") val telco: String = "",
+    @Json(name = "title_en") val titleEn: String = "",
+    @Json(name = "title_ur") val titleUr: String? = null,
+    @Json(name = "ussd_code") val ussdCode: String = "",
+    @Json(name = "description") val description: String? = null,
     @Json(name = "sort_order") val sortOrder: Int = 0,
     @Json(name = "is_active") val isActive: Boolean = true
 )
 
 @JsonClass(generateAdapter = true)
 data class TariffSlab(
-    @Json(name = "id") val id: Int,
-    @Json(name = "tariff_name") val tariffName: String,
-    @Json(name = "from_unit") val fromUnit: Int,
-    @Json(name = "to_unit") val toUnit: Int,
-    @Json(name = "rate_per_unit") val ratePerUnit: Double,
+    @Json(name = "id") val id: Int = 0,
+    @Json(name = "tariff_name") val tariffName: String = "",
+    @Json(name = "from_unit") val fromUnit: Int = 0,
+    @Json(name = "to_unit") val toUnit: Int = 0,
+    @Json(name = "rate_per_unit") val ratePerUnit: Double = 0.0,
     @Json(name = "calc_mode") val calcMode: String = "incremental",
     @Json(name = "is_active") val isActive: Boolean = true
 )
 
 @JsonClass(generateAdapter = true)
 data class TariffCharge(
-    @Json(name = "id") val id: Int,
-    @Json(name = "tariff_name") val tariffName: String,
+    @Json(name = "id") val id: Int = 0,
+    @Json(name = "tariff_name") val tariffName: String = "",
     @Json(name = "fixed_charge") val fixedCharge: Double = 0.0,
     @Json(name = "gst_percent") val gstPercent: Double = 0.0,
     @Json(name = "other_percent") val otherPercent: Double = 0.0,
     @Json(name = "other_flat") val otherFlat: Double = 0.0,
-    @Json(name = "notes") val notes: String?,
+    @Json(name = "notes") val notes: String? = null,
     @Json(name = "is_active") val isActive: Boolean = true
 )
 
 @JsonClass(generateAdapter = true)
 data class Appliance(
-    @Json(name = "id") val id: Int,
-    @Json(name = "name_en") val nameEn: String,
-    @Json(name = "name_ur") val nameUr: String?,
-    @Json(name = "default_watts") val defaultWatts: Int,
-    @Json(name = "icon") val icon: String?,
+    @Json(name = "id") val id: Int = 0,
+    @Json(name = "name_en") val nameEn: String = "",
+    @Json(name = "name_ur") val nameUr: String? = null,
+    @Json(name = "default_watts") val defaultWatts: Int = 100,
+    @Json(name = "icon") val icon: String? = null,
     @Json(name = "sort_order") val sortOrder: Int = 0,
     @Json(name = "is_active") val isActive: Boolean = true
 )
 
 @JsonClass(generateAdapter = true)
 data class Tip(
-    @Json(name = "id") val id: Int,
-    @Json(name = "title_en") val titleEn: String,
-    @Json(name = "title_ur") val titleUr: String?,
-    @Json(name = "body_en") val bodyEn: String,
-    @Json(name = "body_ur") val bodyUr: String?,
+    @Json(name = "id") val id: Int = 0,
+    @Json(name = "title_en") val titleEn: String = "",
+    @Json(name = "title_ur") val titleUr: String? = null,
+    @Json(name = "body_en") val bodyEn: String = "",
+    @Json(name = "body_ur") val bodyUr: String? = null,
     @Json(name = "sort_order") val sortOrder: Int = 0,
     @Json(name = "is_active") val isActive: Boolean = true
 )
 
 @JsonClass(generateAdapter = true)
 data class FeatureFlag(
-    @Json(name = "key") val key: String,
-    @Json(name = "label") val label: String,
+    @Json(name = "key") val key: String = "",
+    @Json(name = "label") val label: String = "",
     @Json(name = "enabled") val enabled: Boolean = true
 )
 
@@ -119,20 +119,20 @@ data class AdConfig(
 
 @JsonClass(generateAdapter = true)
 data class Announcement(
-    @Json(name = "id") val id: Int,
-    @Json(name = "title_en") val titleEn: String,
-    @Json(name = "title_ur") val titleUr: String?,
-    @Json(name = "body_en") val bodyEn: String,
-    @Json(name = "body_ur") val bodyUr: String?,
+    @Json(name = "id") val id: Int = 0,
+    @Json(name = "title_en") val titleEn: String = "",
+    @Json(name = "title_ur") val titleUr: String? = null,
+    @Json(name = "body_en") val bodyEn: String = "",
+    @Json(name = "body_ur") val bodyUr: String? = null,
     @Json(name = "type") val type: String = "info",
-    @Json(name = "link_url") val linkUrl: String?,
-    @Json(name = "starts_at") val startsAt: String?,
-    @Json(name = "ends_at") val endsAt: String?,
+    @Json(name = "link_url") val linkUrl: String? = null,
+    @Json(name = "starts_at") val startsAt: String? = null,
+    @Json(name = "ends_at") val endsAt: String? = null,
     @Json(name = "is_active") val isActive: Boolean = true
 )
 
 @JsonClass(generateAdapter = true)
 data class SiteSetting(
-    @Json(name = "key") val key: String,
-    @Json(name = "value") val value: String?
+    @Json(name = "key") val key: String = "",
+    @Json(name = "value") val value: String? = null
 )

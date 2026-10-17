@@ -9,16 +9,52 @@
 </head>
 <body>
   <div class="main-content">
-    <div class="content-body" id="crud-container"></div>
+    <div class="content-body">
+      <!-- Admin instructions and Quick Test Banner -->
+      <div class="card" style="margin-bottom: 20px; background: linear-gradient(135deg, #064e3b 0%, #065f46 100%); color: white; border: none;">
+        <h2 style="color: white; margin-bottom: 8px;">⚡ Live App Bill Links Manager</h2>
+        <p style="color: #d1fae5; font-size: 0.95rem; margin-bottom: 15px; line-height: 1.5;">
+          Jo bhi link aap yahan save karenge, Android app ke user view mein webview mein wahi exact page load ho jayega!
+          <br>
+          <strong>Supported formats:</strong>
+          <br>• Direct Webpage: <code>https://bill.pitc.com.pk/gepcobill</code>
+          <br>• Dynamic Reference: <code>https://bill.pitc.com.pk/gepcobill?ref={REF}</code>
+          <br>• Any Utility Website: <code>https://lesco.gov.pk</code>
+        </p>
+
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center; background: rgba(255,255,255,0.12); padding: 12px; border-radius: 8px;">
+          <input type="url" id="test-url-input" placeholder="Paste any link to test preview (e.g. https://bill.pitc.com.pk/gepcobill)" style="flex: 1; min-width: 250px; background: white; color: #111;">
+          <button id="test-url-btn" class="btn" style="background: #10b981; border: none; font-weight: 600;">🔗 Test Open in Browser</button>
+        </div>
+      </div>
+
+      <div id="crud-container"></div>
+    </div>
   </div>
 
   <script type="module">
     import { initAuthGuard } from './js/auth-guard.js';
     import { initAdminNav } from './js/admin-nav.js';
     import { initCrud } from './js/crud-component.js';
+    import { showToast } from './js/toast.js';
 
     await initAuthGuard();
     initAdminNav('bill-links');
+
+    document.getElementById('test-url-btn').onclick = () => {
+      const url = document.getElementById('test-url-input').value.trim();
+      if (!url) {
+        showToast('Please enter a URL first', 'error');
+        return;
+      }
+      try {
+        const parsed = new URL(url.startsWith('http') ? url : 'https://' + url);
+        window.open(parsed.href, '_blank');
+        showToast('Opening test preview in new tab...');
+      } catch (e) {
+        showToast('Invalid URL format', 'error');
+      }
+    };
 
     initCrud('crud-container', {
       tableName: 'bill_links',
@@ -27,12 +63,12 @@
         { key: 'name_en', label: 'Name (EN)', required: true },
         { key: 'name_ur', label: 'Name (UR)' },
         { key: 'category', label: 'Category', required: true },
-        { key: 'url', label: 'Official URL', type: 'url', required: true },
+        { key: 'url', label: 'Official URL (Saved page loaded in app WebView)', type: 'url', required: true },
         { key: 'logo_url', label: 'Logo Image', type: 'file' },
         { key: 'sort_order', label: 'Sort Order', type: 'number' },
         { key: 'is_active', label: 'Active', type: 'boolean' }
       ],
-      defaultValues: { sort_order: 0, is_active: true }
+      defaultValues: { category: 'Electricity', sort_order: 0, is_active: true }
     });
   </script>
 </body>

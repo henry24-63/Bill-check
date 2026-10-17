@@ -52,23 +52,53 @@ class MainActivity : ComponentActivity() {
                             navController.navigate(route)
                         })
                     }
-                    composable("bills") {
+                    composable("bill_check") {
                         BillListScreen(
                             repository = repository,
                             onSelectBill = { url, name ->
-                                val encodedUrl = URLEncoder.encode(url, StandardCharsets.UTF_8.toString())
-                                val encodedName = URLEncoder.encode(name, StandardCharsets.UTF_8.toString())
-                                navController.navigate("webview/$encodedUrl/$encodedName")
+                                repository.currentSelectedUrl = url
+                                repository.currentSelectedTitle = name
+                                navController.navigate("webview")
                             },
                             onBack = { navController.popBackStack() }
                         )
                     }
+                    composable("direct_bill") {
+                        DirectBillSearchScreen(
+                            repository = repository,
+                            onOpenBill = { url, name ->
+                                repository.currentSelectedUrl = url
+                                repository.currentSelectedTitle = name
+                                navController.navigate("webview")
+                            },
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
+                    composable("bills") {
+                        BillListScreen(
+                            repository = repository,
+                            onSelectBill = { url, name ->
+                                repository.currentSelectedUrl = url
+                                repository.currentSelectedTitle = name
+                                navController.navigate("webview")
+                            },
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
+                    composable("webview") {
+                        WebViewScreen(
+                            url = repository.currentSelectedUrl,
+                            title = repository.currentSelectedTitle.ifEmpty { "Bill Viewer" },
+                            repository = repository,
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
                     composable("webview/{url}/{name}") { backStackEntry ->
-                        val url = backStackEntry.arguments?.getString("url") ?: ""
-                        val name = backStackEntry.arguments?.getString("name") ?: "Bill"
+                        val url = backStackEntry.arguments?.getString("url") ?: repository.currentSelectedUrl
+                        val name = backStackEntry.arguments?.getString("name") ?: repository.currentSelectedTitle
                         WebViewScreen(
                             url = url,
-                            title = name,
+                            title = name.ifEmpty { "Bill Viewer" },
                             repository = repository,
                             onBack = { navController.popBackStack() }
                         )
