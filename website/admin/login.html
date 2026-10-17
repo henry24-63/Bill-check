@@ -4,48 +4,128 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
-  <title>Admin Login - Bijli Bill Checker</title>
+  <title>Admin Portal - Bijli Bill & Utility Checker</title>
   <link rel="stylesheet" href="css/admin.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #059669 0%, #0f172a 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .login-card {
+      background: rgba(30, 41, 59, 0.85);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 40px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      color: #f8fafc;
+    }
+    .password-container {
+      position: relative;
+    }
+    .toggle-pass {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 1.1rem;
+    }
+    input {
+      background: rgba(15, 23, 42, 0.6) !important;
+      border: 1px solid #334155 !important;
+      color: #fff !important;
+      padding: 12px 16px !important;
+      border-radius: 12px !important;
+    }
+    input:focus {
+      border-color: #10b981 !important;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+    }
+    .btn-primary {
+      background: #10b981;
+      color: white;
+      font-weight: 600;
+      padding: 12px;
+      border-radius: 12px;
+      border: none;
+      width: 100%;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 10px;
+    }
+    .btn-primary:hover {
+      background: #059669;
+      transform: translateY(-1px);
+    }
+  </style>
 </head>
-<body style="display: flex; align-items: center; justify-content: center; height: 100vh; background: var(--bg);">
+<body>
 
-  <div class="card" style="width: 100%; max-width: 400px; padding: 40px;">
-    <div style="text-align: center; margin-bottom: 25px;">
-      <h2>🔒 Admin Portal</h2>
-      <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 5px;">Bijli Bill & Utility Checker</p>
+  <div class="login-card">
+    <div style="text-align: center; margin-bottom: 30px;">
+      <div style="font-size: 3rem; margin-bottom: 10px;">⚡</div>
+      <h2 style="font-size: 1.75rem; font-weight: 700; color: #fff;">Admin Portal</h2>
+      <p style="color: #94a3b8; font-size: 0.9rem; margin-top: 6px;">Bijli Bill & Utility Checker</p>
     </div>
 
     <form id="login-form">
-      <div class="form-group">
-        <label for="email">Admin Email</label>
-        <input type="email" id="email" required autocomplete="email">
+      <div class="form-group" style="margin-bottom: 20px;">
+        <label style="color: #cbd5e1; margin-bottom: 8px;">Admin Email</label>
+        <input type="email" id="email" required autocomplete="email" placeholder="admin@gmail.com">
       </div>
-      <div class="form-group">
-        <label for="password">Password</label>
-        <input type="password" id="password" required autocomplete="current-password">
+
+      <div class="form-group" style="margin-bottom: 20px;">
+        <label style="color: #cbd5e1; margin-bottom: 8px;">Password</label>
+        <div class="password-container">
+          <input type="password" id="password" required autocomplete="current-password" placeholder="••••••••" style="width: 100%; padding-right: 45px;">
+          <button type="button" id="toggle-pass-btn" class="toggle-pass" title="Show/Hide Password">👁️</button>
+        </div>
       </div>
-      <div id="error-msg" style="color: #ef4444; font-size: 0.85rem; margin-bottom: 15px; display: none;"></div>
-      <button type="submit" id="login-btn" class="btn" style="width: 100%; justify-content: center;">Sign In</button>
+
+      <div id="error-msg" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 20px; display: none;"></div>
+
+      <button type="submit" id="login-btn" class="btn-primary">Sign In to Dashboard</button>
     </form>
   </div>
 
   <script type="module">
     import { supabase, isAdmin } from '../js/supabase.js';
 
-    let failedAttempts = parseInt(localStorage.getItem('admin_login_fails') || '0');
-    let lockoutUntil = parseInt(localStorage.getItem('admin_lockout_until') || '0');
-
     const form = document.getElementById('login-form');
     const emailInput = document.getElementById('email');
     const passInput = document.getElementById('password');
+    const togglePassBtn = document.getElementById('toggle-pass-btn');
     const errorDiv = document.getElementById('error-msg');
     const loginBtn = document.getElementById('login-btn');
 
-    // Check lockout
+    let failedAttempts = parseInt(localStorage.getItem('admin_login_fails') || '0');
+    let lockoutUntil = parseInt(localStorage.getItem('admin_lockout_until') || '0');
+
     if (Date.now() < lockoutUntil) {
-      const remainingSec = Math.ceil((lockoutUntil - Date.now()) / 1000);
-      showLockout(remainingSec);
+      showLockout(Math.ceil((lockoutUntil - Date.now()) / 1000));
     }
+
+    togglePassBtn.onclick = () => {
+      if (passInput.type === 'password') {
+        passInput.type = 'text';
+        togglePassBtn.textContent = '🙈';
+      } else {
+        passInput.type = 'password';
+        togglePassBtn.textContent = '👁️';
+      }
+    };
 
     function showLockout(sec) {
       loginBtn.disabled = true;
@@ -71,23 +151,29 @@
 
       errorDiv.style.display = 'none';
       loginBtn.disabled = true;
-      loginBtn.textContent = 'Signing in...';
+      loginBtn.textContent = 'Authenticating...';
 
       try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: emailInput.value.trim(),
-          password: passInput.value
+        const email = emailInput.value.trim();
+        const password = passInput.value;
+
+        // 1. Sign in with Supabase Auth
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+          email: email,
+          password: password
         });
 
-        if (error || !data.session) {
-          handleFailure();
+        if (authError || !authData || !authData.session) {
+          console.error('Auth error:', authError);
+          handleFailure(authError?.message || 'Invalid email or password.');
           return;
         }
 
+        // 2. Verify admin status
         const adminCheck = await isAdmin();
         if (!adminCheck) {
           await supabase.auth.signOut();
-          handleFailure();
+          handleFailure('Access denied. This account is not registered as an administrator.');
           return;
         }
 
@@ -96,23 +182,24 @@
         localStorage.removeItem('admin_lockout_until');
         window.location.replace('/admin/');
       } catch (err) {
-        handleFailure();
+        console.error('Login exception:', err);
+        handleFailure('An unexpected error occurred. Please try again.');
       } finally {
         loginBtn.disabled = false;
-        loginBtn.textContent = 'Sign In';
+        loginBtn.textContent = 'Sign In to Dashboard';
       }
     });
 
-    function handleFailure() {
+    function handleFailure(msg) {
       failedAttempts++;
       localStorage.setItem('admin_login_fails', failedAttempts.toString());
       if (failedAttempts >= 5) {
-        lockoutUntil = Date.now() + 30000; // 30 seconds cooldown
+        lockoutUntil = Date.now() + 30000;
         localStorage.setItem('admin_lockout_until', lockoutUntil.toString());
         showLockout(30);
       } else {
         errorDiv.style.display = 'block';
-        errorDiv.textContent = 'Invalid credentials or access denied.';
+        errorDiv.textContent = msg;
       }
     }
   </script>
