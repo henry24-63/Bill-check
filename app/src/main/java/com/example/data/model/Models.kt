@@ -15,7 +15,13 @@ data class AppConfig(
     @Json(name = "force_update_message") val forceUpdateMessage: String? = null,
     @Json(name = "content_version") val contentVersion: Int = 1,
     @Json(name = "maintenance_mode") val maintenanceMode: Boolean = false,
-    @Json(name = "maintenance_message") val maintenanceMessage: String? = null
+    @Json(name = "maintenance_message") val maintenanceMessage: String? = null,
+    @Json(name = "ad_provider") val adProvider: String = "admob",
+    @Json(name = "ad_mode") val adMode: String = "manual",
+    @Json(name = "admob_app_id") val admobAppId: String? = null,
+    @Json(name = "admob_banner_id") val admobBannerId: String? = null,
+    @Json(name = "admob_interstitial_id") val admobInterstitialId: String? = null,
+    @Json(name = "adsterra_url") val adsterraUrl: String? = null
 )
 
 @JsonClass(generateAdapter = true)
@@ -135,4 +141,12 @@ data class Announcement(
 data class SiteSetting(
     @Json(name = "key") val key: String = "",
     @Json(name = "value") val value: String? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class RecentSearch(
+    @Json(name = "disco") val disco: String = "",
+    @Json(name = "refNumber") val refNumber: String = "",
+    @Json(name = "targetUrl") val targetUrl: String = "",
+    @Json(name = "timestamp") val timestamp: Long = System.currentTimeMillis()
 )

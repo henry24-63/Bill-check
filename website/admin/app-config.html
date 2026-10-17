@@ -4,13 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
-  <title>App Update & Maintenance - Admin</title>
+  <title>App Update, Ads & Maintenance - Admin</title>
   <link rel="stylesheet" href="css/admin.css">
 </head>
 <body>
   <div class="main-content">
     <div class="content-body">
-      <h1 style="margin-bottom: 25px;">🚀 App Update & Maintenance Control</h1>
+      <h1 style="margin-bottom: 25px;">🚀 App Config, Ads & Maintenance</h1>
 
       <div class="card">
         <form id="config-form">
@@ -34,23 +34,47 @@
           </div>
 
           <div class="form-group">
-            <label>APK File Upload (or paste external URL below)</label>
-            <input type="file" id="apk-file-input" accept=".apk" style="margin-bottom: 10px;">
-            <div id="upload-progress" style="display: none; height: 6px; background: var(--border); border-radius: 3px; margin-bottom: 10px; overflow: hidden;">
-              <div id="progress-bar" style="width: 0%; height: 100%; background: var(--primary);"></div>
-            </div>
             <label>APK URL</label>
-            <input type="url" id="apk_url" placeholder="https://..." required>
+            <input type="url" id="apk_url" required>
+          </div>
+
+          <h3 style="margin-top: 20px;">🤖 Smart Ad System Configuration</h3>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
+            <div class="form-group">
+                <label>Ad Provider</label>
+                <select id="ad_provider">
+                    <option value="admob">AdMob</option>
+                    <option value="adsterra">Adsterra</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Ad Mode</label>
+                <select id="ad_mode">
+                    <option value="manual">Manual</option>
+                    <option value="ai_smart">AI Smart Selection</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>AdMob App ID</label>
+                <input type="text" id="admob_app_id">
+            </div>
+            <div class="form-group">
+                <label>AdMob Banner ID</label>
+                <input type="text" id="admob_banner_id">
+            </div>
+            <div class="form-group">
+                <label>AdMob Interstitial ID</label>
+                <input type="text" id="admob_interstitial_id">
+            </div>
+            <div class="form-group">
+                <label>Adsterra URL</label>
+                <input type="text" id="adsterra_url">
+            </div>
           </div>
 
           <div class="form-group">
             <label>Changelog</label>
             <textarea id="changelog" rows="4"></textarea>
-          </div>
-
-          <div class="form-group">
-            <label>Force Update Message</label>
-            <input type="text" id="force_update_message">
           </div>
 
           <div style="display: flex; gap: 20px; margin: 20px 0; flex-wrap: wrap;">
@@ -59,14 +83,8 @@
             </label>
           </div>
 
-          <div class="form-group">
-            <label>Maintenance Message</label>
-            <input type="text" id="maintenance_message">
-          </div>
-
           <div style="display: flex; gap: 15px; margin-top: 25px;">
             <button type="submit" class="btn">Save App Config</button>
-            <button type="button" id="force-update-btn" class="btn btn-outline">⚡ Trigger Force Update (Set Min = Latest)</button>
           </div>
         </form>
       </div>
@@ -77,7 +95,7 @@
     import { initAuthGuard } from './js/auth-guard.js';
     import { initAdminNav } from './js/admin-nav.js';
     import { supabase } from '../js/supabase.js';
-    import { showToast, showConfirm } from './js/toast.js';
+    import { showToast } from './js/toast.js';
 
     await initAuthGuard();
     initAdminNav('app-config');
@@ -88,52 +106,20 @@
       const { data, error } = await supabase.from('app_config').select('*').eq('id', 1).maybeSingle();
       if (error || !data) return;
 
-      document.getElementById('latest_version_code').value = data.latest_version_code;
-      document.getElementById('latest_version_name').value = data.latest_version_name;
-      document.getElementById('min_version_code').value = data.min_version_code;
-      document.getElementById('apk_size_mb').value = data.apk_size_mb;
-      document.getElementById('apk_url').value = data.apk_url;
-      document.getElementById('changelog').value = data.changelog;
-      document.getElementById('force_update_message').value = data.force_update_message;
-      document.getElementById('maintenance_mode').checked = data.maintenance_mode;
-      document.getElementById('maintenance_message').value = data.maintenance_message;
+      document.getElementById('latest_version_code').value = data.latest_version_code || '';
+      document.getElementById('latest_version_name').value = data.latest_version_name || '';
+      document.getElementById('min_version_code').value = data.min_version_code || '';
+      document.getElementById('apk_size_mb').value = data.apk_size_mb || '';
+      document.getElementById('apk_url').value = data.apk_url || '';
+      document.getElementById('ad_provider').value = data.ad_provider || 'admob';
+      document.getElementById('ad_mode').value = data.ad_mode || 'manual';
+      document.getElementById('admob_app_id').value = data.admob_app_id || '';
+      document.getElementById('admob_banner_id').value = data.admob_banner_id || '';
+      document.getElementById('admob_interstitial_id').value = data.admob_interstitial_id || '';
+      document.getElementById('adsterra_url').value = data.adsterra_url || '';
+      document.getElementById('changelog').value = data.changelog || '';
+      document.getElementById('maintenance_mode').checked = data.maintenance_mode || false;
     }
-
-    // APK file upload with progress bar simulation
-    const fileInput = document.getElementById('apk-file-input');
-    const progressBar = document.getElementById('progress-bar');
-    const progressContainer = document.getElementById('upload-progress');
-
-    fileInput.onchange = async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      progressContainer.style.display = 'block';
-      progressBar.style.width = '30%';
-
-      const fileName = `app_${Date.now()}.apk`;
-      const { data, error } = await supabase.storage.from('apk').upload(fileName, file);
-
-      if (error) {
-        showToast(`Upload failed: ${error.message}`, 'error');
-        progressContainer.style.display = 'none';
-        return;
-      }
-
-      progressBar.style.width = '100%';
-      const { data: { publicUrl } } = supabase.storage.from('apk').getPublicUrl(fileName);
-      document.getElementById('apk_url').value = publicUrl;
-      document.getElementById('apk_size_mb').value = (file.size / (1024 * 1024)).toFixed(1);
-      showToast('APK uploaded successfully!');
-      setTimeout(() => progressContainer.style.display = 'none', 1000);
-    };
-
-    document.getElementById('force-update-btn').onclick = () => {
-      showConfirm('Are you sure you want to force update all users by setting min version code equal to latest version code?', () => {
-        document.getElementById('min_version_code').value = document.getElementById('latest_version_code').value;
-        showToast('Min version code updated to latest. Click Save App Config to publish.');
-      });
-    };
 
     form.onsubmit = async (e) => {
       e.preventDefault();
@@ -143,17 +129,16 @@
         min_version_code: Number(document.getElementById('min_version_code').value),
         apk_size_mb: Number(document.getElementById('apk_size_mb').value),
         apk_url: document.getElementById('apk_url').value,
+        ad_provider: document.getElementById('ad_provider').value,
+        ad_mode: document.getElementById('ad_mode').value,
+        admob_app_id: document.getElementById('admob_app_id').value,
+        admob_banner_id: document.getElementById('admob_banner_id').value,
+        admob_interstitial_id: document.getElementById('admob_interstitial_id').value,
+        adsterra_url: document.getElementById('adsterra_url').value,
         changelog: document.getElementById('changelog').value,
-        force_update_message: document.getElementById('force_update_message').value,
         maintenance_mode: document.getElementById('maintenance_mode').checked,
-        maintenance_message: document.getElementById('maintenance_message').value,
         updated_at: new Date().toISOString()
       };
-
-      if (payload.latest_version_code < payload.min_version_code) {
-        showToast('Latest version code cannot be less than min version code.', 'error');
-        return;
-      }
 
       try {
         const { error } = await supabase.from('app_config').update(payload).eq('id', 1);

@@ -10,7 +10,7 @@ export function initAdminNav(activePageKey) {
       <li><a href="/admin/announcements.html" ${activePageKey === 'announcements' ? 'class="active"' : ''}>📢 Announcements</a></li>
       <li><a href="/admin/feature-flags.html" ${activePageKey === 'feature-flags' ? 'class="active"' : ''}>🚩 Feature Flags</a></li>
       <li><a href="/admin/ads-control.html" ${activePageKey === 'ads-control' ? 'class="active"' : ''}>💰 Ads Control</a></li>
-      <li><a href="/admin/site-settings.html" ${activePageKey === 'site-settings' ? 'class="active"' : ''}>⚙️ Site Settings</a></li>
+      <li><a href="/admin/site-settings.html" ${activePageKey === 'site-settings' ? 'class="active"' : ''}>⚙️ Site Settings & Privacy</a></li>
       <li><a href="/admin/tariff-tester.html" ${activePageKey === 'tariff-tester' ? 'class="active"' : ''}>🧮 Tariff Tester</a></li>
       <li><a href="/admin/feedback.html" ${activePageKey === 'feedback' ? 'class="active"' : ''}>💬 Feedback Inbox</a></li>
       <li><a href="/admin/audit-log.html" ${activePageKey === 'audit-log' ? 'class="active"' : ''}>📜 Audit Log</a></li>

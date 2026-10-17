@@ -4,25 +4,147 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
-  <title>Site Settings - Admin</title>
+  <title>Site Settings & Privacy Policy - Admin</title>
   <link rel="stylesheet" href="css/admin.css">
 </head>
 <body>
   <div class="main-content">
-    <div class="content-body" id="crud-container"></div>
+    <div class="content-body">
+      <!-- PRIVACY POLICY MANAGER -->
+      <div class="card" style="margin-bottom: 25px; border-left: 4px solid var(--primary);">
+        <h2 style="margin-bottom: 8px;">🔒 App Privacy Policy Control</h2>
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">
+          Manage the Privacy Policy shown inside the mobile app's <strong>Settings &gt; Privacy Policy</strong> page.
+          Changes take effect live in the mobile app immediately without needing an app update.
+        </p>
+
+        <form id="privacy-form">
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label style="font-weight: 600; display: block; margin-bottom: 6px;">
+              🌐 Privacy Policy Web URL (In-App WebView & External Browser)
+            </label>
+            <div style="display: flex; gap: 10px;">
+              <input 
+                type="url" 
+                id="privacy_policy_url" 
+                class="form-control" 
+                placeholder="https://bijlibillchecker.pk/privacy.html"
+                style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text);"
+              >
+              <button 
+                type="button" 
+                id="test-privacy-url-btn" 
+                class="btn btn-outline"
+                style="white-space: nowrap;"
+              >
+                Test URL ↗
+              </button>
+            </div>
+            <small style="color: var(--text-muted); display: block; margin-top: 4px;">
+              Default: <code>https://bijlibillchecker.pk/privacy.html</code>. Opens when user taps "Official Web Policy" or "Browser".
+            </small>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="font-weight: 600; display: block; margin-bottom: 6px;">
+              📝 In-App Custom Privacy Notice / Policy Text (Optional)
+            </label>
+            <textarea 
+              id="privacy_policy_text" 
+              rows="6" 
+              class="form-control"
+              placeholder="Enter any custom privacy policy announcements, terms, or disclosures to be displayed directly inside the mobile app..."
+              style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-family: inherit; font-size: 14px; resize: vertical;"
+            ></textarea>
+            <small style="color: var(--text-muted); display: block; margin-top: 4px;">
+              If filled, this text is rendered prominently in the mobile app. If left blank, the app displays its standard clean privacy protection guide.
+            </small>
+          </div>
+
+          <div style="display: flex; gap: 12px; align-items: center;">
+            <button type="submit" class="btn" style="padding: 10px 24px; font-weight: 600;">
+              💾 Save Privacy Policy Settings
+            </button>
+            <span id="save-status" style="font-size: 13px; color: var(--text-muted);"></span>
+          </div>
+        </form>
+      </div>
+
+      <!-- ALL OTHER SITE SETTINGS TABLE -->
+      <div id="crud-container"></div>
+    </div>
   </div>
 
   <script type="module">
     import { initAuthGuard } from './js/auth-guard.js';
     import { initAdminNav } from './js/admin-nav.js';
     import { initCrud } from './js/crud-component.js';
+    import { supabase } from '../js/supabase.js';
+    import { showToast } from './js/toast.js';
 
     await initAuthGuard();
     initAdminNav('site-settings');
 
+    const urlInput = document.getElementById('privacy_policy_url');
+    const textInput = document.getElementById('privacy_policy_text');
+    const form = document.getElementById('privacy-form');
+    const testBtn = document.getElementById('test-privacy-url-btn');
+
+    // Load current privacy policy values from Supabase site_settings
+    async function loadPrivacySettings() {
+      try {
+        const { data, error } = await supabase
+          .from('site_settings')
+          .select('key, value');
+        
+        if (!error && data) {
+          const urlSetting = data.find(item => item.key === 'privacy_policy_url' || item.key === 'privacy_url');
+          if (urlSetting && urlSetting.value) {
+            urlInput.value = urlSetting.value;
+          } else {
+            urlInput.value = 'https://bijlibillchecker.pk/privacy.html';
+          }
+
+          const textSetting = data.find(item => item.key === 'privacy_policy_text' || item.key === 'privacy_policy');
+          if (textSetting && textSetting.value) {
+            textInput.value = textSetting.value;
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load privacy settings', err);
+      }
+    }
+
+    await loadPrivacySettings();
+
+    testBtn.addEventListener('click', () => {
+      const url = urlInput.value.trim() || 'https://bijlibillchecker.pk/privacy.html';
+      window.open(url, '_blank');
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const newUrl = urlInput.value.trim() || 'https://bijlibillchecker.pk/privacy.html';
+      const newText = textInput.value.trim();
+
+      try {
+        // Upsert privacy_policy_url
+        await supabase.from('site_settings').upsert([
+          { key: 'privacy_policy_url', value: newUrl },
+          { key: 'privacy_policy_text', value: newText }
+        ], { onConflict: 'key' });
+
+        showToast('Privacy Policy settings saved successfully!');
+      } catch (err) {
+        console.error('Failed to save privacy settings', err);
+        showToast('Error saving Privacy Policy', 'error');
+      }
+    });
+
+    // Standard CRUD table for all site settings
     initCrud('crud-container', {
       tableName: 'site_settings',
-      title: 'Site Settings & App Texts',
+      title: 'All Key-Value Site Settings & App Texts',
       columns: [
         { key: 'key', label: 'Key', required: true },
         { key: 'value', label: 'Value', type: 'textarea', required: true }

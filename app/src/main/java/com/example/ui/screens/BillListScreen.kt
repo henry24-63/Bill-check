@@ -3,7 +3,9 @@ package com.example.ui.screens
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ElectricBolt
@@ -14,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.data.model.BillLink
@@ -31,7 +34,8 @@ fun BillListScreen(
     var isLoading by remember { mutableStateOf(false) }
     var links by remember { mutableStateOf(repository.billLinks) }
     var searchQuery by remember { mutableStateOf("") }
-    var quickRef by remember { mutableStateOf(repository.getLastRefNumber()) }
+    var selectedCategory by remember { mutableStateOf("All") }
+    val savedRef = repository.getLastRefNumber()
 
     fun refreshLinks() {
         scope.launch {
@@ -45,23 +49,39 @@ fun BillListScreen(
         refreshLinks()
     }
 
-    val filteredLinks = remember(links, searchQuery) {
-        if (searchQuery.isBlank()) {
-            links
-        } else {
-            links.filter {
-                it.nameEn.contains(searchQuery, ignoreCase = true) ||
-                (it.nameUr ?: "").contains(searchQuery, ignoreCase = true) ||
-                it.category.contains(searchQuery, ignoreCase = true) ||
-                it.url.contains(searchQuery, ignoreCase = true)
+    // Extract unique categories
+    val categories = remember(links) {
+        val cats = links.map { it.category }.filter { it.isNotBlank() }.distinct().toMutableList()
+        cats.add(0, "All")
+        cats
+    }
+
+    val filteredLinks = remember(links, searchQuery, selectedCategory) {
+        links.filter { link ->
+            val matchesCategory = (selectedCategory == "All") || link.category.equals(selectedCategory, ignoreCase = true)
+            val matchesSearch = if (searchQuery.isBlank()) true else {
+                link.nameEn.contains(searchQuery, ignoreCase = true) ||
+                (link.nameUr ?: "").contains(searchQuery, ignoreCase = true) ||
+                link.category.contains(searchQuery, ignoreCase = true) ||
+                link.url.contains(searchQuery, ignoreCase = true)
             }
+            matchesCategory && matchesSearch
         }
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Electricity & Utility Bills") },
+                title = { 
+                    Column {
+                        Text("Utility Portals Directory", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text(
+                            "${filteredLinks.size} Portals Available", 
+                            style = MaterialTheme.typography.labelSmall, 
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -81,39 +101,54 @@ fun BillListScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                // Search bar
                 item {
-                    // Quick Reference & Search Bar
-                    Card(
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        placeholder = { Text("Search by company or city (e.g. GEPCO, LESCO...)") },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                         modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                    ) {
-                        Column(modifier = Modifier.padding(14.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.ElectricBolt, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Links Configured from Admin Panel", style = MaterialTheme.typography.titleSmall)
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                }
+
+                // Category chips
+                if (categories.size > 2) {
+                    item {
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            items(categories) { cat ->
+                                FilterChip(
+                                    selected = selectedCategory == cat,
+                                    onClick = { selectedCategory = cat },
+                                    label = { Text(cat) }
+                                )
                             }
-                            Spacer(modifier = Modifier.height(10.dp))
-                            OutlinedTextField(
-                                value = quickRef,
-                                onValueChange = { 
-                                    quickRef = it.filter { ch -> ch.isDigit() }
-                                    repository.saveLastRefNumber(quickRef)
-                                },
-                                label = { Text("Reference Number (Optional)") },
-                                placeholder = { Text("Enter 14-digit ref if available") },
-                                modifier = Modifier.fillMaxWidth(),
-                                singleLine = true
-                            )
-                            Spacer(modifier = Modifier.height(10.dp))
-                            OutlinedTextField(
-                                value = searchQuery,
-                                onValueChange = { searchQuery = it },
-                                placeholder = { Text("Filter by board name (e.g. GEPCO, LESCO...)") },
-                                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                                modifier = Modifier.fillMaxWidth(),
-                                singleLine = true
-                            )
+                        }
+                    }
+                }
+
+                // Active Ref indicator banner if present
+                if (savedRef.isNotEmpty()) {
+                    item {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.ElectricBolt, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    "Saved Reference: $savedRef (Will auto-fill on portal)",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
                         }
                     }
                 }
@@ -129,10 +164,10 @@ fun BillListScreen(
                         ) {
                             Text("⚡", style = MaterialTheme.typography.displayMedium)
                             Spacer(modifier = Modifier.height(16.dp))
-                            Text("No Bill Links Found", style = MaterialTheme.typography.titleMedium)
+                            Text("No Portals Found", style = MaterialTheme.typography.titleMedium)
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                "Add or enable bill links in the Admin Panel under 'Bill Links'.",
+                                "No links matched your query. Check connection or refresh from admin panel.",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -141,7 +176,7 @@ fun BillListScreen(
                             Button(onClick = { refreshLinks() }) {
                                 Icon(Icons.Default.Refresh, contentDescription = null)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Check Again")
+                                Text("Refresh Portals")
                             }
                         }
                     }
@@ -151,8 +186,8 @@ fun BillListScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable {
-                                    val finalUrl = if (quickRef.isNotBlank()) {
-                                        repository.resolveBillUrl(link.url, quickRef)
+                                    val finalUrl = if (savedRef.isNotBlank()) {
+                                        repository.resolveBillUrl(link.url, savedRef)
                                     } else {
                                         link.url
                                     }
@@ -160,6 +195,7 @@ fun BillListScreen(
                                     repository.currentSelectedTitle = link.nameEn
                                     onSelectBill(finalUrl, link.nameEn)
                                 },
+                            shape = RoundedCornerShape(12.dp),
                             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                         ) {
                             Row(
@@ -175,35 +211,42 @@ fun BillListScreen(
                                         modifier = Modifier.size(44.dp)
                                     )
                                 } else {
-                                    Icon(
-                                        Icons.Default.ElectricBolt,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(40.dp),
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
+                                    Surface(
+                                        shape = RoundedCornerShape(8.dp),
+                                        color = MaterialTheme.colorScheme.primaryContainer,
+                                        modifier = Modifier.size(44.dp)
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Icon(
+                                                Icons.Default.ElectricBolt,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(24.dp),
+                                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                            )
+                                        }
+                                    }
                                 }
-                                Spacer(modifier = Modifier.width(16.dp))
+                                Spacer(modifier = Modifier.width(14.dp))
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text(link.nameEn, style = MaterialTheme.typography.titleMedium)
+                                    Text(link.nameEn, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                                     if (!link.nameUr.isNullOrEmpty()) {
                                         Text(
                                             link.nameUr,
-                                            style = MaterialTheme.typography.bodyMedium,
+                                            style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(
-                                        link.url,
+                                        link.category.uppercase(),
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        maxLines = 1
+                                        color = MaterialTheme.colorScheme.primary
                                     )
                                 }
                                 FilledTonalButton(
                                     onClick = {
-                                        val finalUrl = if (quickRef.isNotBlank()) {
-                                            repository.resolveBillUrl(link.url, quickRef)
+                                        val finalUrl = if (savedRef.isNotBlank()) {
+                                            repository.resolveBillUrl(link.url, savedRef)
                                         } else {
                                             link.url
                                         }
@@ -211,6 +254,7 @@ fun BillListScreen(
                                         repository.currentSelectedTitle = link.nameEn
                                         onSelectBill(finalUrl, link.nameEn)
                                     },
+                                    shape = RoundedCornerShape(8.dp),
                                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                                 ) {
                                     Text("Open")

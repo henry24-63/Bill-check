@@ -17,8 +17,11 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.OpenInBrowser
@@ -38,13 +41,21 @@ import java.nio.charset.StandardCharsets
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WebViewScreen(url: String, title: String, repository: ContentRepository, onBack: () -> Unit) {
+fun WebViewScreen(
+    url: String, 
+    title: String, 
+    repository: ContentRepository, 
+    autoFillRef: String = repository.currentRefNumber.ifEmpty { repository.getLastRefNumber() },
+    onBack: () -> Unit
+) {
     val context = LocalContext.current
     var webViewRef: WebView? = null
     var isLoading by remember { mutableStateOf(true) }
     var hasError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
     var progress by remember { mutableStateOf(0) }
+    var hasAutoSubmitted by remember { mutableStateOf(false) }
+    var showAutoFillBadge by remember { mutableStateOf(false) }
 
     // Resolve and sanitize URL
     val effectiveUrl = remember(url) {
@@ -65,7 +76,7 @@ fun WebViewScreen(url: String, title: String, repository: ContentRepository, onB
         if (title.isNotBlank()) title else repository.currentSelectedTitle.ifEmpty { "Bill Viewer" }
     }
 
-    // Extract domain for subtle security/official badge
+    // Extract domain for subtle security badge
     val hostDomain = remember(effectiveUrl) {
         try {
             Uri.parse(effectiveUrl).host ?: ""
@@ -134,13 +145,28 @@ fun WebViewScreen(url: String, title: String, repository: ContentRepository, onB
                             }
                         },
                         actions = {
+                            // Quick Auto-Fill action button
+                            if (autoFillRef.isNotBlank()) {
+                                IconButton(onClick = {
+                                    webViewRef?.let { wv ->
+                                        wv.evaluateJavascript(buildAutoFillScript(autoFillRef)) { res ->
+                                            Toast.makeText(context, "Auto-filled: $autoFillRef", Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                                }) {
+                                    Icon(Icons.Default.Bolt, contentDescription = "Auto-Fill Reference", tint = MaterialTheme.colorScheme.primary)
+                                }
+                            }
+
                             IconButton(onClick = {
                                 hasError = false
                                 isLoading = true
+                                hasAutoSubmitted = false
                                 webViewRef?.reload()
                             }) {
                                 Icon(Icons.Default.Refresh, contentDescription = "Reload")
                             }
+
                             IconButton(onClick = {
                                 val currentUrl = webViewRef?.url ?: effectiveUrl
                                 if (currentUrl.isNotEmpty()) {
@@ -151,6 +177,7 @@ fun WebViewScreen(url: String, title: String, repository: ContentRepository, onB
                             }) {
                                 Icon(Icons.Default.ContentCopy, contentDescription = "Copy Link")
                             }
+
                             IconButton(onClick = {
                                 val currentUrl = webViewRef?.url ?: effectiveUrl
                                 if (currentUrl.isNotEmpty()) {
@@ -221,6 +248,7 @@ fun WebViewScreen(url: String, title: String, repository: ContentRepository, onB
                         Button(onClick = {
                             hasError = false
                             isLoading = true
+                            hasAutoSubmitted = false
                             webViewRef?.reload()
                         }) {
                             Icon(Icons.Default.Refresh, contentDescription = null)
@@ -298,6 +326,30 @@ fun WebViewScreen(url: String, title: String, repository: ContentRepository, onB
                                 override fun onPageFinished(view: WebView?, finishUrl: String?) {
                                     super.onPageFinished(view, finishUrl)
                                     isLoading = false
+
+                                    // Auto-fill and auto-submit reference number on portal forms
+                                    val ref = autoFillRef.trim()
+                                    if (ref.isNotEmpty() && !hasAutoSubmitted) {
+                                        val script = buildAutoFillScript(ref)
+                                        view?.evaluateJavascript(script) { res ->
+                                            if (res != null && !res.contains("not_found") && !res.contains("error")) {
+                                                hasAutoSubmitted = true
+                                                showAutoFillBadge = true
+                                            }
+                                        }
+
+                                        // Delayed retry in case DOM rendered asynchronously
+                                        view?.postDelayed({
+                                            if (!hasAutoSubmitted) {
+                                                view.evaluateJavascript(script) { res ->
+                                                    if (res != null && !res.contains("not_found") && !res.contains("error")) {
+                                                        hasAutoSubmitted = true
+                                                        showAutoFillBadge = true
+                                                    }
+                                                }
+                                            }
+                                        }, 700)
+                                    }
                                 }
 
                                 override fun onReceivedError(
@@ -343,7 +395,188 @@ fun WebViewScreen(url: String, title: String, repository: ContentRepository, onB
                         webViewRef = webView
                     }
                 )
+
+                // Floating auto-fill confirmation badge
+                AnimatedVisibility(
+                    visible = showAutoFillBadge,
+                    enter = fadeIn(),
+                    exit = fadeOut(),
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 24.dp)
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(24.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        tonalElevation = 6.dp,
+                        shadowElevation = 8.dp
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.Check, 
+                                contentDescription = null, 
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Auto-filled Ref: $autoFillRef ⚡",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                    }
+                }
             }
         }
     }
+}
+
+/**
+ * Robust JavaScript snippet to locate reference number input on utility portals,
+ * populate value with native events, and trigger the search button.
+ */
+private fun buildAutoFillScript(referenceNumber: String): String {
+    val cleanRef = referenceNumber.replace("\\", "\\\\").replace("'", "\\'").trim()
+    return """
+        (function() {
+            try {
+                var ref = '$cleanRef';
+                if (!ref || ref.length < 3) return 'empty_ref';
+
+                function fillField(el, val) {
+                    el.focus();
+                    el.value = val;
+                    try {
+                        var proto = Object.getPrototypeOf(el);
+                        var setter = Object.getOwnPropertyDescriptor(proto, 'value');
+                        if (setter && setter.set) {
+                            setter.set.call(el, val);
+                        }
+                    } catch(e) {}
+                    el.dispatchEvent(new Event('input', { bubbles: true }));
+                    el.dispatchEvent(new Event('change', { bubbles: true }));
+                    el.dispatchEvent(new Event('blur', { bubbles: true }));
+                }
+
+                function triggerSearch(form) {
+                    setTimeout(function() {
+                        var btn = null;
+                        var btnSelectors = [
+                            'button[type="submit"]',
+                            'input[type="submit"]',
+                            'input[value*="search" i]',
+                            'input[value*="view" i]',
+                            'input[value*="submit" i]',
+                            'button[id*="search" i]',
+                            'button[id*="submit" i]',
+                            'button[id*="view" i]',
+                            'button[name*="search" i]',
+                            'button[name*="submit" i]',
+                            'input[name*="search" i]',
+                            '.btn-search',
+                            'a.btn'
+                        ];
+
+                        if (form) {
+                            for (var b = 0; b < btnSelectors.length; b++) {
+                                var candidate = form.querySelector(btnSelectors[b]);
+                                if (candidate && candidate.offsetParent !== null) {
+                                    btn = candidate;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (!btn) {
+                            for (var c = 0; c < btnSelectors.length; c++) {
+                                var candidate = document.querySelector(btnSelectors[c]);
+                                if (candidate && candidate.offsetParent !== null) {
+                                    btn = candidate;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (btn) {
+                            btn.click();
+                        } else if (form) {
+                            form.submit();
+                        }
+                    }, 300);
+                }
+
+                // 1. Check known Pakistani DISCO / PITC reference field names and IDs
+                var prioritySelectors = [
+                    'input[name*="ref_no" i]',
+                    'input[name*="refno" i]',
+                    'input[id*="ref_no" i]',
+                    'input[id*="refno" i]',
+                    'input[name*="reference" i]',
+                    'input[id*="reference" i]',
+                    'input[name*="consumer" i]',
+                    'input[id*="consumer" i]',
+                    'input[name*="txtRef" i]',
+                    'input[id*="txtRef" i]',
+                    'input[name="ref"]',
+                    'input[id="ref"]',
+                    'input[name="search"]',
+                    'input[id="search"]',
+                    'input[name*="account" i]',
+                    'input[placeholder*="reference" i]',
+                    'input[placeholder*="consumer" i]',
+                    'input[placeholder*="14" i]'
+                ];
+
+                var targetInput = null;
+                for (var i = 0; i < prioritySelectors.length; i++) {
+                    var el = document.querySelector(prioritySelectors[i]);
+                    if (el && el.offsetParent !== null && !el.disabled && el.type !== 'hidden') {
+                        targetInput = el;
+                        break;
+                    }
+                }
+
+                // 2. Segmented Inputs check (Batch, Sub-div, Ref, RU)
+                var batchEl = document.querySelector('input[name*="batch" i], input[id*="batch" i]');
+                var subDivEl = document.querySelector('input[name*="sub" i], input[id*="sub" i]');
+                var refEl = document.querySelector('input[name*="ref" i], input[id*="ref" i]');
+                var ruEl = document.querySelector('input[name*="ru" i], input[id*="ru" i]');
+
+                if (ref.length === 14 && (batchEl || subDivEl) && refEl) {
+                    if (batchEl) fillField(batchEl, ref.substring(0, 2));
+                    if (subDivEl) fillField(subDivEl, ref.substring(2, 6));
+                    if (refEl) fillField(refEl, ref.substring(6, 13));
+                    if (ruEl) fillField(ruEl, ref.substring(13, 14));
+                    triggerSearch(batchEl ? batchEl.form : (subDivEl ? subDivEl.form : null));
+                    return 'segmented_filled';
+                }
+
+                // 3. Fallback to only visible text input on page
+                if (!targetInput) {
+                    var visibleInputs = Array.prototype.slice.call(
+                        document.querySelectorAll('input[type="text"], input[type="number"], input[type="tel"], input:not([type])')
+                    ).filter(function(el) {
+                        return el.offsetParent !== null && !el.disabled && el.type !== 'hidden' && el.name !== 'captcha';
+                    });
+                    if (visibleInputs.length === 1) {
+                        targetInput = visibleInputs[0];
+                    }
+                }
+
+                if (targetInput) {
+                    fillField(targetInput, ref);
+                    triggerSearch(targetInput.form);
+                    return 'single_filled';
+                }
+
+                return 'not_found';
+            } catch(e) {
+                return 'error: ' + e.message;
+            }
+        })();
+    """.trimIndent()
 }

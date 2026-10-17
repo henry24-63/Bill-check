@@ -16,6 +16,10 @@ class ContentRepository(context: Context) {
         Types.newParameterizedType(List::class.java, BillLink::class.java)
     )
 
+    private val siteSettingsAdapter = moshi.adapter<List<SiteSetting>>(
+        Types.newParameterizedType(List::class.java, SiteSetting::class.java)
+    )
+
     var cachedAppConfig: AppConfig? = null
     var billLinks: List<BillLink> = emptyList()
     var helplines: List<Helpline> = emptyList()
@@ -31,10 +35,13 @@ class ContentRepository(context: Context) {
 
     var currentSelectedUrl: String = ""
     var currentSelectedTitle: String = ""
+    var currentRefNumber: String = ""
 
     init {
         // Instant millisecond loading from local storage
+        currentRefNumber = getLastRefNumber()
         loadCachedBillLinks()
+        loadCachedSiteSettings()
     }
 
     private fun loadCachedBillLinks() {
@@ -75,6 +82,29 @@ class ContentRepository(context: Context) {
         }
     }
 
+    private fun loadCachedSiteSettings() {
+        try {
+            val cachedJson = prefs.getString("cached_site_settings", null)
+            if (!cachedJson.isNullOrEmpty()) {
+                val parsed = siteSettingsAdapter.fromJson(cachedJson)
+                if (!parsed.isNullOrEmpty()) {
+                    siteSettings = parsed
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun saveCachedSiteSettings(list: List<SiteSetting>) {
+        try {
+            val json = siteSettingsAdapter.toJson(list)
+            prefs.edit().putString("cached_site_settings", json).apply()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
     suspend fun fetchBillLinks(): List<BillLink> = withContext(Dispatchers.IO) {
         try {
             val list = api.getBillLinks().filter { it.isActive }.sortedBy { it.sortOrder }
@@ -86,6 +116,20 @@ class ContentRepository(context: Context) {
         } catch (e: Exception) {
             e.printStackTrace()
             return@withContext billLinks
+        }
+    }
+
+    suspend fun fetchSiteSettings(): List<SiteSetting> = withContext(Dispatchers.IO) {
+        try {
+            val list = api.getSiteSettings()
+            if (list.isNotEmpty()) {
+                siteSettings = list
+                saveCachedSiteSettings(list)
+            }
+            return@withContext siteSettings
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return@withContext siteSettings
         }
     }
 
@@ -120,10 +164,30 @@ class ContentRepository(context: Context) {
             val adList = api.getAdConfig()
             if (adList.isNotEmpty()) adConfig = adList[0]
             announcements = api.getAnnouncements().filter { it.isActive }
-            siteSettings = api.getSiteSettings()
+            
+            val fetchedSettings = api.getSiteSettings()
+            if (fetchedSettings.isNotEmpty()) {
+                siteSettings = fetchedSettings
+                saveCachedSiteSettings(fetchedSettings)
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         }
+    }
+
+    fun getPrivacyPolicyUrl(): String {
+        return siteSettings.find { 
+            it.key.trim().equals("privacy_policy_url", ignoreCase = true) || 
+            it.key.trim().equals("privacy_url", ignoreCase = true) 
+        }?.value?.trim()?.ifEmpty { null } ?: "https://bijlibillchecker.pk/privacy.html"
+    }
+
+    fun getPrivacyPolicyText(): String? {
+        return siteSettings.find { 
+            it.key.trim().equals("privacy_policy_text", ignoreCase = true) || 
+            it.key.trim().equals("privacy_policy", ignoreCase = true) ||
+            it.key.trim().equals("privacy_policy_content", ignoreCase = true)
+        }?.value?.trim()?.ifEmpty { null }
     }
 
     fun getCachedContentVersion(): Int {
@@ -131,7 +195,8 @@ class ContentRepository(context: Context) {
     }
 
     fun saveLastRefNumber(ref: String) {
-        prefs.edit().putString("last_user_ref", ref.trim()).apply()
+        currentRefNumber = ref.trim()
+        prefs.edit().putString("last_user_ref", currentRefNumber).apply()
     }
 
     fun getLastRefNumber(): String {

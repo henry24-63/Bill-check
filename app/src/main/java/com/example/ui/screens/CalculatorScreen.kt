@@ -1,7 +1,10 @@
 package com.example.ui.screens
 
+import android.app.Activity
 import android.content.Intent
 import androidx.activity.compose.BackHandler
+import com.example.data.ads.AdActionType
+import com.example.data.ads.SmartAdManager
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -91,11 +94,21 @@ fun CalculatorScreen(repository: ContentRepository, onBack: () -> Unit) {
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(
                             onClick = {
-                                val units = unitsStr.toIntOrNull() ?: 0
-                                val slabs = repository.tariffSlabs.filter { it.tariffName == selectedTariff }
-                                val charges = repository.tariffCharges.find { it.tariffName == selectedTariff }
+                                val performCalc = {
+                                    val units = unitsStr.toIntOrNull() ?: 0
+                                    val slabs = repository.tariffSlabs.filter { it.tariffName == selectedTariff }
+                                    val charges = repository.tariffCharges.find { it.tariffName == selectedTariff }
+                                    calculationResult = computeBill(selectedTariff, units, slabs, charges)
+                                }
 
-                                calculationResult = computeBill(selectedTariff, units, slabs, charges)
+                                val activity = context as? Activity
+                                if (activity != null) {
+                                    SmartAdManager.triggerSmartAd(activity, repository, AdActionType.CALCULATION_RESULT) {
+                                        performCalc()
+                                    }
+                                } else {
+                                    performCalc()
+                                }
                             },
                             modifier = Modifier.fillMaxWidth()
                         ) {
