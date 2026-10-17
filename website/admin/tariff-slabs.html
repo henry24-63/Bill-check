@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Tariff Slabs - Admin</title>
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <div class="main-content">
+    <div class="content-body" id="crud-container"></div>
+  </div>
+
+  <script type="module">
+    import { initAuthGuard } from './js/auth-guard.js';
+    import { initAdminNav } from './js/admin-nav.js';
+    import { initCrud } from './js/crud-component.js';
+
+    await initAuthGuard();
+    initAdminNav('tariff-slabs');
+
+    initCrud('crud-container', {
+      tableName: 'tariff_slabs',
+      title: 'Tariff Slabs',
+      columns: [
+        { key: 'tariff_name', label: 'Tariff Name', required: true },
+        { key: 'from_unit', label: 'From Unit', type: 'number', required: true },
+        { key: 'to_unit', label: 'To Unit', type: 'number', required: true },
+        { key: 'rate_per_unit', label: 'Rate Per Unit', type: 'number', required: true },
+        { key: 'calc_mode', label: 'Calc Mode', type: 'select', options: ['incremental', 'whole_rate'], required: true },
+        { key: 'is_active', label: 'Active', type: 'boolean' }
+      ],
+      defaultValues: { calc_mode: 'incremental', is_active: true }
+    });
+  </script>
+</body>
+</html>

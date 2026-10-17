@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Feedback Inbox - Admin</title>
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <div class="main-content">
+    <div class="content-body" id="crud-container"></div>
+  </div>
+
+  <script type="module">
+    import { initAuthGuard } from './js/auth-guard.js';
+    import { initAdminNav } from './js/admin-nav.js';
+    import { initCrud } from './js/crud-component.js';
+
+    await initAuthGuard();
+    initAdminNav('feedback');
+
+    initCrud('crud-container', {
+      tableName: 'feedback',
+      title: 'Feedback Inbox',
+      columns: [
+        { key: 'id', label: 'ID' },
+        { key: 'message', label: 'Message' },
+        { key: 'contact', label: 'Contact' },
+        { key: 'app_version', label: 'App Version' },
+        { key: 'status', label: 'Status', type: 'select', options: ['new', 'read', 'resolved'] },
+        { key: 'created_at', label: 'Created At' }
+      ],
+      defaultValues: { status: 'new' }
+    });
+  </script>
+</body>
+</html>

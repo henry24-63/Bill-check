@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Audit Log - Admin</title>
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <div class="main-content">
+    <div class="content-body">
+      <h1 style="margin-bottom: 25px;">📜 Audit Log & Rollback Center</h1>
+
+      <div class="card">
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Table</th>
+                <th>Action</th>
+                <th>Row ID</th>
+                <th>Created At</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="audit-tbody">
+              <tr><td colspan="6" style="text-align: center;">Loading audit logs...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initAuthGuard } from './js/auth-guard.js';
+    import { initAdminNav } from './js/admin-nav.js';
+    import { supabase } from '../js/supabase.js';
+    import { showToast, showConfirm } from './js/toast.js';
+
+    await initAuthGuard();
+    initAdminNav('audit-log');
+
+    async function loadAuditLogs() {
+      const { data, error } = await supabase.from('audit_log').select('*').order('created_at', { ascending: false }).limit(100);
+      const tbody = document.getElementById('audit-tbody');
+      if (error || !data || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center;">No audit logs found.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = data.map(row => `
+        <tr>
+          <td>${row.id}</td>
+          <td><strong>${row.table_name}</strong></td>
+          <td>${row.action}</td>
+          <td>${row.row_id || '-'}</td>
+          <td>${new Date(row.created_at).toLocaleString()}</td>
+          <td>
+            <button class="btn btn-outline btn-sm view-btn" data-old='${JSON.stringify(row.old_data || {})}' data-new='${JSON.stringify(row.new_data || {})}' data-table="${row.table_name}" data-rowid="${row.row_id}">View Diff</button>
+            ${row.old_data && row.row_id ? `<button class="btn btn-sm restore-btn" data-table="${row.table_name}" data-rowid="${row.row_id}" data-old='${JSON.stringify(row.old_data)}'>Restore</button>` : ''}
+          </td>
+        </tr>
+      `).join('');
+
+      tbody.querySelectorAll('.view-btn').forEach(btn => {
+        btn.onclick = () => {
+          const oldData = JSON.parse(btn.dataset.old);
+          const newData = JSON.parse(btn.dataset.new);
+          alert(`OLD DATA:\n${JSON.stringify(oldData, null, 2)}\n\nNEW DATA:\n${JSON.stringify(newData, null, 2)}`);
+        };
+      });
+
+      tbody.querySelectorAll('.restore-btn').forEach(btn => {
+        btn.onclick = () => {
+          const table = btn.dataset.table;
+          const rowId = btn.dataset.rowid;
+          const oldData = JSON.parse(btn.dataset.old);
+          showConfirm(`Restore row ID ${rowId} in table ${table} to previous state?`, async () => {
+            try {
+              const { error } = await supabase.from(table).update(oldData).eq('id', rowId);
+              if (error) throw error;
+              showToast('Row successfully restored!');
+              loadAuditLogs();
+            } catch (err) {
+              showToast(`Restore failed: ${err.message}`, 'error');
+            }
+          });
+        };
+      });
+    }
+
+    loadAuditLogs();
+  </script>
+</body>
+</html>

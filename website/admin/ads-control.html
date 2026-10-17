@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Ads Control - Admin</title>
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <div class="main-content">
+    <div class="content-body">
+      <h1 style="margin-bottom: 25px;">💰 Ads Control & AdMob Configuration</h1>
+
+      <div class="card">
+        <form id="ads-form">
+          <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 20px;">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="checkbox" id="ads_enabled" style="width: auto;"> Master Ads Enabled
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="checkbox" id="banner_enabled" style="width: auto;"> Banner Ads Enabled
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="checkbox" id="interstitial_enabled" style="width: auto;"> Interstitial Ads Enabled
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="checkbox" id="interstitial_after_calculation" style="width: auto;"> Interstitial After Calculation
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label>Interstitial Interval Minutes (1..30)</label>
+            <input type="number" id="interstitial_interval_minutes" min="1" max="30" required>
+          </div>
+
+          <div class="form-group">
+            <label>Banner Screens (Comma separated: home, calculator, codes, helplines, bill_check, tips)</label>
+            <input type="text" id="banner_screens" placeholder="home, calculator, codes">
+          </div>
+
+          <button type="submit" class="btn">Save Ad Configuration</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initAuthGuard } from './js/auth-guard.js';
+    import { initAdminNav } from './js/admin-nav.js';
+    import { supabase } from '../js/supabase.js';
+    import { showToast } from './js/toast.js';
+
+    await initAuthGuard();
+    initAdminNav('ads-control');
+
+    const form = document.getElementById('ads-form');
+
+    async function loadAds() {
+      const { data, error } = await supabase.from('ad_config').select('*').eq('id', 1).maybeSingle();
+      if (error || !data) return;
+
+      document.getElementById('ads_enabled').checked = data.ads_enabled;
+      document.getElementById('banner_enabled').checked = data.banner_enabled;
+      document.getElementById('interstitial_enabled').checked = data.interstitial_enabled;
+      document.getElementById('interstitial_after_calculation').checked = data.interstitial_after_calculation;
+      document.getElementById('interstitial_interval_minutes').value = data.interstitial_interval_minutes;
+      document.getElementById('banner_screens').value = (data.banner_screens || []).join(', ');
+    }
+
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const screensInput = document.getElementById('banner_screens').value;
+      const screensArray = screensInput.split(',').map(s => s.trim()).filter(s => s !== '');
+
+      const payload = {
+        ads_enabled: document.getElementById('ads_enabled').checked,
+        banner_enabled: document.getElementById('banner_enabled').checked,
+        interstitial_enabled: document.getElementById('interstitial_enabled').checked,
+        interstitial_after_calculation: document.getElementById('interstitial_after_calculation').checked,
+        interstitial_interval_minutes: Number(document.getElementById('interstitial_interval_minutes').value),
+        banner_screens: screensArray
+      };
+
+      try {
+        const { error } = await supabase.from('ad_config').update(payload).eq('id', 1);
+        if (error) throw error;
+        showToast('Ad configuration saved successfully! (Published)');
+      } catch (err) {
+        showToast(`Save failed: ${err.message}`, 'error');
+      }
+    };
+
+    loadAds();
+  </script>
+</body>
+</html>

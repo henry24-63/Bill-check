@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Tariff Charges - Admin</title>
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <div class="main-content">
+    <div class="content-body" id="crud-container"></div>
+  </div>
+
+  <script type="module">
+    import { initAuthGuard } from './js/auth-guard.js';
+    import { initAdminNav } from './js/admin-nav.js';
+    import { initCrud } from './js/crud-component.js';
+
+    await initAuthGuard();
+    initAdminNav('tariff-charges');
+
+    initCrud('crud-container', {
+      tableName: 'tariff_charges',
+      title: 'Tariff Charges (Taxes & Fixed)',
+      columns: [
+        { key: 'tariff_name', label: 'Tariff Name', required: true },
+        { key: 'fixed_charge', label: 'Fixed Charge', type: 'number' },
+        { key: 'gst_percent', label: 'GST %', type: 'number' },
+        { key: 'other_percent', label: 'Other %', type: 'number' },
+        { key: 'other_flat', label: 'Other Flat', type: 'number' },
+        { key: 'notes', label: 'Notes' },
+        { key: 'is_active', label: 'Active', type: 'boolean' }
+      ],
+      defaultValues: { fixed_charge: 0, gst_percent: 0, other_percent: 0, other_flat: 0, is_active: true }
+    });
+  </script>
+</body>
+</html>

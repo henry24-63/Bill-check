@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Admin Dashboard - Bijli Bill Checker</title>
+  <link rel="stylesheet" href="css/admin.css">
+  <!-- Chart.js from cdnjs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="main-content">
+    <div class="content-body">
+      <h1 style="margin-bottom: 25px;">Dashboard Overview</h1>
+
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card">
+          <h4>App Opens</h4>
+          <div class="value" id="stat-app-open">-</div>
+        </div>
+        <div class="stat-card">
+          <h4>APK Downloads</h4>
+          <div class="value" id="stat-apk-download">-</div>
+        </div>
+        <div class="stat-card">
+          <h4>Bill Checks</h4>
+          <div class="value" id="stat-bill-check">-</div>
+        </div>
+        <div class="stat-card">
+          <h4>Pending Feedback</h4>
+          <div class="value" id="stat-feedback">-</div>
+        </div>
+      </div>
+
+      <div class="card" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+        <div>
+          <h3>System Status</h3>
+          <p style="margin-top: 10px; color: var(--text-muted);">Latest Version: <strong id="info-version">-</strong></p>
+          <p style="margin-top: 5px; color: var(--text-muted);">Content Version: <strong id="info-content-ver">-</strong></p>
+          <p style="margin-top: 5px; color: var(--text-muted);">Maintenance Mode: <span id="info-maintenance" class="badge" style="display:inline-block; padding: 2px 8px; border-radius: 4px;">-</span></p>
+        </div>
+        <div>
+          <h3>Quick Management</h3>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px;">
+            <a href="/admin/app-config.html" class="btn btn-sm">🚀 Update APK</a>
+            <a href="/admin/announcements.html" class="btn btn-sm">📢 Announcements</a>
+            <a href="/admin/feedback.html" class="btn btn-sm">💬 Feedback</a>
+            <a href="/admin/tariff-tester.html" class="btn btn-sm">🧮 Tariff Tester</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Activity Trends (Last 30 Days)</h3>
+        <div style="height: 320px; margin-top: 20px;">
+          <canvas id="trendChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initAuthGuard } from './js/auth-guard.js';
+    import { initAdminNav } from './js/admin-nav.js';
+    import { supabase } from '../js/supabase.js';
+
+    await initAuthGuard();
+    initAdminNav('dashboard');
+
+    // Load stats & config
+    async function loadDashboard() {
+      // 1. App config status
+      const { data: configData } = await supabase.from('app_config').select('*').eq('id', 1).maybeSingle();
+      if (configData) {
+        document.getElementById('info-version').textContent = configData.latest_version_name || '1.0.0';
+        document.getElementById('info-content-ver').textContent = configData.content_version || 1;
+        const maintEl = document.getElementById('info-maintenance');
+        maintEl.textContent = configData.maintenance_mode ? 'ENABLED' : 'OFF';
+        maintEl.style.background = configData.maintenance_mode ? '#ef4444' : '#10b981';
+        maintEl.style.color = 'white';
+      }
+
+      // 2. Feedback count
+      const { count: feedbackCount } = await supabase.from('feedback').select('*', { count: 'exact', head: true }).eq('status', 'new');
+      document.getElementById('stat-feedback').textContent = feedbackCount || 0;
+
+      // 3. Daily stats totals
+      const { data: statsData } = await supabase.from('daily_stats').select('stat_key, count');
+      const totals = {};
+      (statsData || []).forEach(s => {
+        totals[s.stat_key] = (totals[s.stat_key] || 0) + s.count;
+      });
+
+      document.getElementById('stat-app-open').textContent = totals['app_open'] || 0;
+      document.getElementById('stat-apk-download').textContent = totals['apk_download'] || 0;
+      document.getElementById('stat-bill-check').textContent = totals['bill_check_open'] || 0;
+
+      // 4. Chart.js trends
+      const ctx = document.getElementById('trendChart').getContext('2d');
+      const { data: dailyRows } = await supabase.from('daily_stats').select('*').order('stat_date', { ascending: true }).limit(100);
+      
+      const dates = [...new Set((dailyRows || []).map(r => r.stat_date))].slice(-15);
+      const openCounts = dates.map(d => dailyRows.filter(r => r.stat_date === d && r.stat_key === 'app_open').reduce((a, b) => a + b.count, 0));
+      const downloadCounts = dates.map(d => dailyRows.filter(r => r.stat_date === d && r.stat_key === 'apk_download').reduce((a, b) => a + b.count, 0));
+
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: dates,
+          datasets: [
+            { label: 'App Opens', data: openCounts, borderColor: '#059669', tension: 0.3 },
+            { label: 'APK Downloads', data: downloadCounts, borderColor: '#3b82f6', tension: 0.3 }
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+
+    loadDashboard();
+  </script>
+</body>
+</html>

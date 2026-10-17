@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Account & Security - Admin</title>
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <div class="main-content">
+    <div class="content-body">
+      <h1 style="margin-bottom: 25px;">👤 Admin Account & Security</h1>
+
+      <div class="card" style="max-width: 600px;">
+        <h3>Change Password</h3>
+        <p style="color: var(--text-muted); margin: 10px 0 20px; font-size: 0.9rem;">Password must be at least 12 characters long.</p>
+
+        <form id="password-form">
+          <div class="form-group">
+            <label>New Password</label>
+            <input type="password" id="new-password" required minlength="12">
+            <div id="strength-meter" style="height: 4px; background: var(--border); margin-top: 6px; border-radius: 2px; overflow: hidden;">
+              <div id="strength-bar" style="width: 0%; height: 100%; transition: width 0.3s;"></div>
+            </div>
+          </div>
+          <button type="submit" class="btn">Update Password</button>
+        </form>
+      </div>
+
+      <div class="card" style="max-width: 600px;">
+        <h3>Session Security</h3>
+        <p style="color: var(--text-muted); margin: 10px 0 20px; font-size: 0.9rem;">Terminate all active sessions across all devices immediately.</p>
+        <button id="logout-everywhere-btn" class="btn btn-danger">Log Out Everywhere</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initAuthGuard } from './js/auth-guard.js';
+    import { initAdminNav } from './js/admin-nav.js';
+    import { supabase } from '../js/supabase.js';
+    import { showToast, showConfirm } from './js/toast.js';
+
+    await initAuthGuard();
+    initAdminNav('account');
+
+    const passInput = document.getElementById('new-password');
+    const strengthBar = document.getElementById('strength-bar');
+
+    passInput.oninput = (e) => {
+      const val = e.target.value;
+      let score = 0;
+      if (val.length >= 12) score += 40;
+      if (/[A-Z]/.test(val)) score += 20;
+      if (/[0-9]/.test(val)) score += 20;
+      if (/[^A-Za-z0-9]/.test(val)) score += 20;
+
+      strengthBar.style.width = `${score}%`;
+      strengthBar.style.background = score < 60 ? '#ef4444' : score < 100 ? '#f59e0b' : '#10b981';
+    };
+
+    document.getElementById('password-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const newPassword = passInput.value;
+      if (newPassword.length < 12) {
+        showToast('Password must be at least 12 characters long.', 'error');
+        return;
+      }
+
+      try {
+        const { error } = await supabase.auth.updateUser({ password: newPassword });
+        if (error) throw error;
+        showToast('Password updated successfully!');
+        passInput.value = '';
+        strengthBar.style.width = '0%';
+      } catch (err) {
+        showToast(`Update failed: ${err.message}`, 'error');
+      }
+    };
+
+    document.getElementById('logout-everywhere-btn').onclick = () => {
+      showConfirm('Log out everywhere? This will terminate all active admin sessions.', async () => {
+        try {
+          await supabase.auth.signOut({ scope: 'global' });
+          window.location.replace('/admin/login.html');
+        } catch (err) {
+          showToast(`Logout failed: ${err.message}`, 'error');
+        }
+      });
+    };
+  </script>
+</body>
+</html>

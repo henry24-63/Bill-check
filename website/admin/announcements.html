@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Announcements - Admin</title>
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <div class="main-content">
+    <div class="content-body" id="crud-container"></div>
+  </div>
+
+  <script type="module">
+    import { initAuthGuard } from './js/auth-guard.js';
+    import { initAdminNav } from './js/admin-nav.js';
+    import { initCrud } from './js/crud-component.js';
+
+    await initAuthGuard();
+    initAdminNav('announcements');
+
+    initCrud('crud-container', {
+      tableName: 'announcements',
+      title: 'Announcements',
+      columns: [
+        { key: 'title_en', label: 'Title (EN)', required: true },
+        { key: 'title_ur', label: 'Title (UR)' },
+        { key: 'type', label: 'Type', type: 'select', options: ['info', 'warning', 'success'], required: true },
+        { key: 'link_url', label: 'Link URL', type: 'url' },
+        { key: 'is_active', label: 'Active', type: 'boolean' }
+      ],
+      defaultValues: { type: 'info', is_active: true }
+    });
+  </script>
+</body>
+</html>

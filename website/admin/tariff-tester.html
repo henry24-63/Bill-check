@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Tariff Tester - Admin</title>
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <div class="main-content">
+    <div class="content-body">
+      <h1 style="margin-bottom: 25px;">🧮 Tariff Calculation Tester & Comparator</h1>
+
+      <div class="card">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 20px;">
+          <div class="form-group">
+            <label>Tariff Name</label>
+            <select id="tariff-select"></select>
+          </div>
+          <div class="form-group">
+            <label>Electricity Units Consumed</label>
+            <input type="number" id="units-input" value="150" min="0">
+          </div>
+        </div>
+        <button id="calc-btn" class="btn">Calculate Bill</button>
+      </div>
+
+      <div id="results-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initAuthGuard } from './js/auth-guard.js';
+    import { initAdminNav } from './js/admin-nav.js';
+    import { supabase } from '../js/supabase.js';
+    import { calculateBill } from './js/tariff-algo.js';
+    import { showToast } from './js/toast.js';
+
+    await initAuthGuard();
+    initAdminNav('tariff-tester');
+
+    let allSlabs = [];
+    let allCharges = [];
+
+    async function initTester() {
+      const { data: slabs } = await supabase.from('tariff_slabs').select('*').eq('is_active', true);
+      const { data: charges } = await supabase.from('tariff_charges').select('*').eq('is_active', true);
+
+      allSlabs = slabs || [];
+      allCharges = charges || [];
+
+      const tariffs = [...new Set(allSlabs.map(s => s.tariff_name))];
+      const select = document.getElementById('tariff-select');
+      select.innerHTML = tariffs.map(t => `<option value="${t}">${t}</option>`).join('');
+
+      document.getElementById('calc-btn').onclick = runCalculation;
+    }
+
+    function runCalculation() {
+      const tariffName = document.getElementById('tariff-select').value;
+      const units = Number(document.getElementById('units-input').value);
+
+      const slabs = allSlabs.filter(s => s.tariff_name === tariffName);
+      const charges = allCharges.find(c => c.tariff_name === tariffName) || { fixed_charge: 0, gst_percent: 0, other_percent: 0, other_flat: 0 };
+
+      const result = calculateBill(units, slabs, charges);
+
+      const container = document.getElementById('results-container');
+      container.innerHTML = `
+        <div class="card">
+          <h3>Tariff: ${tariffName}</h3>
+          <p style="margin-top: 10px;">Mode: <strong>${result.mode}</strong></p>
+          <p style="margin-top: 5px;">Units Consumed: <strong>${units}</strong></p>
+          <hr style="margin: 15px 0; border-color: var(--border);">
+          <p>Energy Charge: <strong>Rs. ${result.energy}</strong></p>
+          <p>Fixed Charge: <strong>Rs. ${result.fixedCharge}</strong></p>
+          <p>Tax (GST + Other): <strong>Rs. ${result.tax}</strong></p>
+          <p>Other Flat: <strong>Rs. ${result.otherFlat}</strong></p>
+          <hr style="margin: 15px 0; border-color: var(--border);">
+          <h2 style="color: var(--primary);">Total Bill: Rs. ${result.total}</h2>
+        </div>
+      `;
+    }
+
+    initTester();
+  </script>
+</body>
+</html>

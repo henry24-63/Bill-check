@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Site Settings - Admin</title>
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <div class="main-content">
+    <div class="content-body" id="crud-container"></div>
+  </div>
+
+  <script type="module">
+    import { initAuthGuard } from './js/auth-guard.js';
+    import { initAdminNav } from './js/admin-nav.js';
+    import { initCrud } from './js/crud-component.js';
+
+    await initAuthGuard();
+    initAdminNav('site-settings');
+
+    initCrud('crud-container', {
+      tableName: 'site_settings',
+      title: 'Site Settings & App Texts',
+      columns: [
+        { key: 'key', label: 'Key', required: true },
+        { key: 'value', label: 'Value', type: 'textarea', required: true }
+      ],
+      defaultValues: {}
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Energy Tips - Admin</title>
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <div class="main-content">
+    <div class="content-body" id="crud-container"></div>
+  </div>
+
+  <script type="module">
+    import { initAuthGuard } from './js/auth-guard.js';
+    import { initAdminNav } from './js/admin-nav.js';
+    import { initCrud } from './js/crud-component.js';
+
+    await initAuthGuard();
+    initAdminNav('tips');
+
+    initCrud('crud-container', {
+      tableName: 'tips',
+      title: 'Energy Saving Tips',
+      columns: [
+        { key: 'title_en', label: 'Title (EN)', required: true },
+        { key: 'title_ur', label: 'Title (UR)' },
+        { key: 'body_en', label: 'Body (EN)', type: 'textarea', required: true },
+        { key: 'body_ur', label: 'Body (UR)', type: 'textarea' },
+        { key: 'sort_order', label: 'Sort Order', type: 'number' },
+        { key: 'is_active', label: 'Active', type: 'boolean' }
+      ],
+      defaultValues: { sort_order: 0, is_active: true }
+    });
+  </script>
+</body>
+</html>

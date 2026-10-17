@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Backup & Restore - Admin</title>
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <div class="main-content">
+    <div class="content-body">
+      <h1 style="margin-bottom: 25px;">💾 System Backup & Restore</h1>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+        <div class="card">
+          <h3>Export Backup</h3>
+          <p style="color: var(--text-muted); margin: 10px 0 20px;">Download complete snapshot of all content tables, feature flags, ad config, announcements, site settings, and app config as a JSON file.</p>
+          <button id="export-json-btn" class="btn">📥 Export JSON Backup</button>
+        </div>
+
+        <div class="card">
+          <h3>Restore Backup</h3>
+          <p style="color: var(--text-muted); margin: 10px 0 20px;">Upload a previously exported JSON backup file to restore database state via upsert.</p>
+          <input type="file" id="import-json-file" accept=".json" style="margin-bottom: 15px;">
+          <button id="restore-btn" class="btn btn-outline" disabled>Restore from JSON</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initAuthGuard } from './js/auth-guard.js';
+    import { initAdminNav } from './js/admin-nav.js';
+    import { supabase } from '../js/supabase.js';
+    import { showToast, showConfirm } from './js/toast.js';
+
+    await initAuthGuard();
+    initAdminNav('backup-restore');
+
+    const tables = [
+      'app_config', 'feature_flags', 'ad_config', 'announcements', 
+      'site_settings', 'bill_links', 'helplines', 'package_codes', 
+      'tariff_slabs', 'tariff_charges', 'appliances', 'tips'
+    ];
+
+    document.getElementById('export-json-btn').onclick = async () => {
+      try {
+        const backupData = { timestamp: new Date().toISOString(), tables: {} };
+        for (const t of tables) {
+          const { data, error } = await supabase.from(t).select('*');
+          if (!error) backupData.tables[t] = data;
+        }
+
+        const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `bijli_backup_${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+        showToast('Backup exported successfully!');
+      } catch (err) {
+        showToast(`Export failed: ${err.message}`, 'error');
+      }
+    };
+
+    let uploadedBackupJson = null;
+    const fileInput = document.getElementById('import-json-file');
+    const restoreBtn = document.getElementById('restore-btn');
+
+    fileInput.onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          uploadedBackupJson = JSON.parse(event.target.result);
+          if (!uploadedBackupJson.tables) throw new Error('Invalid backup format');
+          restoreBtn.disabled = false;
+          showToast('Backup file loaded & verified successfully.');
+        } catch (err) {
+          showToast(`Invalid JSON file: ${err.message}`, 'error');
+        }
+      };
+      reader.readAsText(file);
+    };
+
+    restoreBtn.onclick = () => {
+      if (!uploadedBackupJson) return;
+      showConfirm('Are you sure you want to restore database state from backup? This will upsert records.', async () => {
+        try {
+          for (const [tableName, rows] of Object.entries(uploadedBackupJson.tables)) {
+            if (rows && rows.length > 0) {
+              await supabase.from(tableName).upsert(rows);
+            }
+          }
+          showToast('Database restore completed successfully!');
+        } catch (err) {
+          showToast(`Restore failed: ${err.message}`, 'error');
+        }
+      });
+    };
+  </script>
+</body>
+</html>

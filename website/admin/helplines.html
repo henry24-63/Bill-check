@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Helplines - Admin</title>
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <div class="main-content">
+    <div class="content-body" id="crud-container"></div>
+  </div>
+
+  <script type="module">
+    import { initAuthGuard } from './js/auth-guard.js';
+    import { initAdminNav } from './js/admin-nav.js';
+    import { initCrud } from './js/crud-component.js';
+
+    await initAuthGuard();
+    initAdminNav('helplines');
+
+    initCrud('crud-container', {
+      tableName: 'helplines',
+      title: 'Helplines Directory',
+      columns: [
+        { key: 'org_name_en', label: 'Org Name (EN)', required: true },
+        { key: 'org_name_ur', label: 'Org Name (UR)' },
+        { key: 'category', label: 'Category', required: true },
+        { key: 'number', label: 'Phone Number', required: true },
+        { key: 'notes', label: 'Notes' },
+        { key: 'sort_order', label: 'Sort Order', type: 'number' },
+        { key: 'is_active', label: 'Active', type: 'boolean' }
+      ],
+      defaultValues: { sort_order: 0, is_active: true }
+    });
+  </script>
+</body>
+</html>

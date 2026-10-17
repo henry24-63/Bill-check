@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Admin Login - Bijli Bill Checker</title>
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body style="display: flex; align-items: center; justify-content: center; height: 100vh; background: var(--bg);">
+
+  <div class="card" style="width: 100%; max-width: 400px; padding: 40px;">
+    <div style="text-align: center; margin-bottom: 25px;">
+      <h2>🔒 Admin Portal</h2>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 5px;">Bijli Bill & Utility Checker</p>
+    </div>
+
+    <form id="login-form">
+      <div class="form-group">
+        <label for="email">Admin Email</label>
+        <input type="email" id="email" required autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" required autocomplete="current-password">
+      </div>
+      <div id="error-msg" style="color: #ef4444; font-size: 0.85rem; margin-bottom: 15px; display: none;"></div>
+      <button type="submit" id="login-btn" class="btn" style="width: 100%; justify-content: center;">Sign In</button>
+    </form>
+  </div>
+
+  <script type="module">
+    import { supabase, isAdmin } from '../js/supabase.js';
+
+    let failedAttempts = parseInt(localStorage.getItem('admin_login_fails') || '0');
+    let lockoutUntil = parseInt(localStorage.getItem('admin_lockout_until') || '0');
+
+    const form = document.getElementById('login-form');
+    const emailInput = document.getElementById('email');
+    const passInput = document.getElementById('password');
+    const errorDiv = document.getElementById('error-msg');
+    const loginBtn = document.getElementById('login-btn');
+
+    // Check lockout
+    if (Date.now() < lockoutUntil) {
+      const remainingSec = Math.ceil((lockoutUntil - Date.now()) / 1000);
+      showLockout(remainingSec);
+    }
+
+    function showLockout(sec) {
+      loginBtn.disabled = true;
+      errorDiv.style.display = 'block';
+      errorDiv.textContent = `Too many failed attempts. Locked out for ${sec}s.`;
+      const interval = setInterval(() => {
+        const left = Math.ceil((lockoutUntil - Date.now()) / 1000);
+        if (left <= 0) {
+          clearInterval(interval);
+          loginBtn.disabled = false;
+          errorDiv.style.display = 'none';
+          localStorage.removeItem('admin_login_fails');
+          localStorage.removeItem('admin_lockout_until');
+        } else {
+          errorDiv.textContent = `Too many failed attempts. Locked out for ${left}s.`;
+        }
+      }, 1000);
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (Date.now() < lockoutUntil) return;
+
+      errorDiv.style.display = 'none';
+      loginBtn.disabled = true;
+      loginBtn.textContent = 'Signing in...';
+
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: emailInput.value.trim(),
+          password: passInput.value
+        });
+
+        if (error || !data.session) {
+          handleFailure();
+          return;
+        }
+
+        const adminCheck = await isAdmin();
+        if (!adminCheck) {
+          await supabase.auth.signOut();
+          handleFailure();
+          return;
+        }
+
+        // Success
+        localStorage.removeItem('admin_login_fails');
+        localStorage.removeItem('admin_lockout_until');
+        window.location.replace('/admin/');
+      } catch (err) {
+        handleFailure();
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Sign In';
+      }
+    });
+
+    function handleFailure() {
+      failedAttempts++;
+      localStorage.setItem('admin_login_fails', failedAttempts.toString());
+      if (failedAttempts >= 5) {
+        lockoutUntil = Date.now() + 30000; // 30 seconds cooldown
+        localStorage.setItem('admin_lockout_until', lockoutUntil.toString());
+        showLockout(30);
+      } else {
+        errorDiv.style.display = 'block';
+        errorDiv.textContent = 'Invalid credentials or access denied.';
+      }
+    }
+  </script>
+</body>
+</html>

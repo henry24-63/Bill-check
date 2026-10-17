@@ -1,0 +1,6 @@
+{
+  "name": "Bijli Bill & Utility Checker",
+  "description": "Pakistan Electricity Bill & Utility Services Checker",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
