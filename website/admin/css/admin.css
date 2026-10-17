@@ -343,3 +343,20 @@ tr:hover td {
   aside.mobile-open { transform: translateX(0); }
   .main-content { margin-left: 0; }
 }
+
+/* Smooth Page Transitions */
+.content-body {
+  animation: fadeInSlide 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeInSlide {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+

@@ -155,11 +155,11 @@ export async function initCrud(containerId, options) {
     });
 
     tbody.querySelectorAll('.dup-btn').forEach(btn => {
-      duplicateRow(parseInt(btn.dataset.id));
+      btn.onclick = () => duplicateRow(parseInt(btn.dataset.id));
     });
 
     tbody.querySelectorAll('.del-btn').forEach(btn => {
-      deleteRow(parseInt(btn.dataset.id));
+      btn.onclick = () => deleteRow(parseInt(btn.dataset.id));
     });
   }
 
