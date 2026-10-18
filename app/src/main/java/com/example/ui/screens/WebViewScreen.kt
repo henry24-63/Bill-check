@@ -100,6 +100,7 @@ fun WebViewScreen(
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             Surface(
                 color = MaterialTheme.colorScheme.surface,
@@ -108,6 +109,7 @@ fun WebViewScreen(
             ) {
                 Column {
                     TopAppBar(
+                        windowInsets = WindowInsets.statusBars,
                         title = {
                             Column {
                                 Text(
@@ -301,8 +303,9 @@ fun WebViewScreen(
                                 setSupportMultipleWindows(false)
                                 allowFileAccess = true
                                 allowContentAccess = true
-                                userAgentString = "Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
+                                userAgentString = "Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36"
                             }
+                            setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null)
 
                             webViewClient = object : WebViewClient() {
                                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {

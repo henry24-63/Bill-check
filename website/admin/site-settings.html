@@ -70,6 +70,130 @@
         </form>
       </div>
 
+      <!-- GROQ AI SEO & META TAGS MANAGER -->
+      <div class="card" style="margin-bottom: 25px; border-left: 4px solid #f59e0b; background: var(--surface);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+          <div>
+            <h2 style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+              <span>🤖</span> Groq AI SEO &amp; Meta Tags Manager
+              <span style="font-size: 11px; padding: 3px 8px; border-radius: 6px; background: rgba(245, 158, 11, 0.15); color: #f59e0b; font-weight: 700;">
+                llama-3.3-70b-versatile
+              </span>
+            </h2>
+            <p style="color: var(--text-muted); font-size: 14px;">
+              Use your Groq API key to dynamically generate, optimize, and rank PowerPulse on Google Search with high-converting meta tags, OpenGraph previews, and JSON-LD schema.
+            </p>
+          </div>
+          <button type="button" id="groq-test-btn" class="btn btn-outline" style="font-size: 13px; padding: 6px 14px;">
+            ⚡ Test Groq Connection
+          </button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 16px;">
+          <div class="form-group">
+            <label style="font-weight: 600; display: block; margin-bottom: 6px;">
+              🔑 Groq API Key (<code style="color: #f59e0b;">gsk_...</code>)
+            </label>
+            <div style="display: flex; gap: 8px;">
+              <input 
+                type="password" 
+                id="groq_api_key_input" 
+                class="form-control" 
+                placeholder="gsk_xxxxxxxxxxxxxxxxxxxxxxxx"
+                style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text);"
+              >
+              <button type="button" id="groq-toggle-visibility" class="btn btn-outline" style="padding: 0 12px;" title="Show/Hide Key">
+                👁️
+              </button>
+            </div>
+            <small style="color: var(--text-muted); display: block; margin-top: 4px;">
+              Stored securely in Supabase <code>site_settings</code>. Never exposed in public client bundles.
+            </small>
+          </div>
+
+          <div class="form-group">
+            <label style="font-weight: 600; display: block; margin-bottom: 6px;">
+              🧠 AI SEO Model Selection
+            </label>
+            <select id="groq_model_select" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text);">
+              <option value="llama-3.3-70b-versatile" selected>llama-3.3-70b-versatile (Recommended • Deep SEO Intelligence)</option>
+              <option value="llama-3.1-8b-instant">llama-3.1-8b-instant (Ultra-Fast Inference)</option>
+              <option value="mixtral-8x7b-32768">mixtral-8x7b-32768</option>
+            </select>
+            <small style="color: var(--text-muted); display: block; margin-top: 4px;">
+              Powered by Groq's high-speed LPU inference engine.
+            </small>
+          </div>
+        </div>
+
+        <!-- 1-Click AI Generation Button -->
+        <div style="background: rgba(245, 158, 11, 0.08); border: 1px dashed #f59e0b; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <div>
+              <strong style="color: #f59e0b; font-size: 15px;">⚡ Automatic Groq SEO Meta Optimization</strong>
+              <p style="color: var(--text-muted); font-size: 13px; margin-top: 2px;">
+                Groq AI will analyze all DISCO portals, utility slabs, and calculators to generate ranking titles, meta descriptions, OpenGraph tags, and Google Rich Schema.
+              </p>
+            </div>
+            <button type="button" id="groq-generate-btn" class="btn" style="background: #f59e0b; color: #000; font-weight: 700; padding: 10px 20px;">
+              🚀 Run Groq AI SEO Optimizer
+            </button>
+          </div>
+          <div id="groq-status-msg" style="margin-top: 10px; font-size: 13px; font-weight: 600; display: none;"></div>
+        </div>
+
+        <!-- Live SEO Previews & Edit Fields -->
+        <div id="seo-preview-section" style="display: none;">
+          <h3 style="font-size: 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+            <span>🌐</span> Live Google SERP &amp; Social Card Preview
+          </h3>
+          
+          <!-- Google Preview Box -->
+          <div style="background: #ffffff; color: #1a0dab; border: 1px solid #dfe1e5; border-radius: 10px; padding: 16px; margin-bottom: 16px; font-family: Roboto, Arial, sans-serif;">
+            <div style="font-size: 12px; color: #202124; display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+              <span style="background: #059669; color: #fff; width: 16px; height: 16px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px;">⚡</span>
+              <span>powerpulse.app</span>
+              <span style="color: #5f6368;">› pakistan-electricity-bills</span>
+            </div>
+            <div id="serp-title" style="font-size: 18px; line-height: 1.3; font-weight: 500; color: #1a0dab; margin-bottom: 4px; cursor: pointer;">
+              PowerPulse — Check Pakistan Electricity Bills Online
+            </div>
+            <div id="serp-desc" style="font-size: 13px; line-height: 1.5; color: #4d5156;">
+              Instant online electricity bill checker for LESCO, IESCO, K-Electric, GEPCO, MEPCO, PESCO. Auto-fill 14-digit reference number, appliance calculator &amp; emergency helplines.
+            </div>
+          </div>
+
+          <!-- Structured SEO Details -->
+          <div style="display: grid; grid-template-columns: 1fr; gap: 14px;">
+            <div class="form-group">
+              <label style="font-weight: 600;">SEO Meta Title (Title Tag)</label>
+              <input type="text" id="seo_title_input" class="form-control" style="width: 100%; padding: 9px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text);">
+            </div>
+
+            <div class="form-group">
+              <label style="font-weight: 600;">Meta Description (Google Snippet)</label>
+              <textarea id="seo_desc_input" rows="2" class="form-control" style="width: 100%; padding: 9px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text);"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label style="font-weight: 600;">High-Ranking Search Keywords (Comma-separated)</label>
+              <input type="text" id="seo_keywords_input" class="form-control" style="width: 100%; padding: 9px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text);">
+            </div>
+
+            <div class="form-group">
+              <label style="font-weight: 600;">Schema.org JSON-LD Structured Data (Google Rich Results)</label>
+              <textarea id="seo_schema_input" rows="4" class="form-control" style="width: 100%; padding: 9px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-family: monospace; font-size: 12px;"></textarea>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; margin-top: 16px;">
+            <button type="button" id="save-seo-btn" class="btn" style="background: var(--primary); padding: 10px 24px; font-weight: 600;">
+              💾 Save &amp; Publish SEO Meta Tags to Website
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- ALL OTHER SITE SETTINGS TABLE -->
       <div id="crud-container"></div>
     </div>
@@ -90,8 +214,26 @@
     const form = document.getElementById('privacy-form');
     const testBtn = document.getElementById('test-privacy-url-btn');
 
-    // Load current privacy policy values from Supabase site_settings
-    async function loadPrivacySettings() {
+    // Groq AI SEO elements
+    const groqKeyInput = document.getElementById('groq_api_key_input');
+    const groqModelSelect = document.getElementById('groq_model_select');
+    const groqToggleVisibilityBtn = document.getElementById('groq-toggle-visibility');
+    const groqTestBtn = document.getElementById('groq-test-btn');
+    const groqGenerateBtn = document.getElementById('groq-generate-btn');
+    const groqStatusMsg = document.getElementById('groq-status-msg');
+    const seoPreviewSection = document.getElementById('seo-preview-section');
+    const serpTitleEl = document.getElementById('serp-title');
+    const serpDescEl = document.getElementById('serp-desc');
+    const seoTitleInput = document.getElementById('seo_title_input');
+    const seoDescInput = document.getElementById('seo_desc_input');
+    const seoKeywordsInput = document.getElementById('seo_keywords_input');
+    const seoSchemaInput = document.getElementById('seo_schema_input');
+    const saveSeoBtn = document.getElementById('save-seo-btn');
+
+    let currentSeoData = {};
+
+    // Load current privacy policy and Groq AI SEO values from Supabase site_settings
+    async function loadAllSettings() {
       try {
         const { data, error } = await supabase
           .from('site_settings')
@@ -109,13 +251,265 @@
           if (textSetting && textSetting.value) {
             textInput.value = textSetting.value;
           }
+
+          // Load Groq settings
+          const groqKeySetting = data.find(item => item.key === 'groq_api_key');
+          if (groqKeySetting && groqKeySetting.value) {
+            groqKeyInput.value = groqKeySetting.value;
+          }
+
+          const groqModelSetting = data.find(item => item.key === 'groq_model');
+          if (groqModelSetting && groqModelSetting.value) {
+            groqModelSelect.value = groqModelSetting.value;
+          }
+
+          const seoSetting = data.find(item => item.key === 'seo_meta_tags');
+          if (seoSetting && seoSetting.value) {
+            try {
+              currentSeoData = typeof seoSetting.value === 'string' ? JSON.parse(seoSetting.value) : seoSetting.value;
+              renderSeoFields(currentSeoData);
+            } catch (parseErr) {
+              console.warn('Failed to parse seo_meta_tags:', parseErr);
+            }
+          }
         }
       } catch (err) {
-        console.error('Failed to load privacy settings', err);
+        console.error('Failed to load settings', err);
       }
     }
 
-    await loadPrivacySettings();
+    function renderSeoFields(seo) {
+      if (!seo) return;
+      seoTitleInput.value = seo.title || '';
+      seoDescInput.value = seo.description || '';
+      seoKeywordsInput.value = seo.keywords || '';
+      seoSchemaInput.value = typeof seo.schema_json === 'object' ? JSON.stringify(seo.schema_json, null, 2) : (seo.schema_json || '');
+
+      serpTitleEl.textContent = seo.title || 'PowerPulse — Check Pakistan Electricity Bills Online';
+      serpDescEl.textContent = seo.description || 'Instant online electricity bill checker for LESCO, IESCO, K-Electric, GEPCO, MEPCO, PESCO.';
+      seoPreviewSection.style.display = 'block';
+    }
+
+    // Toggle Groq key visibility
+    groqToggleVisibilityBtn.addEventListener('click', () => {
+      if (groqKeyInput.type === 'password') {
+        groqKeyInput.type = 'text';
+        groqToggleVisibilityBtn.textContent = '🔒';
+      } else {
+        groqKeyInput.type = 'password';
+        groqToggleVisibilityBtn.textContent = '👁️';
+      }
+    });
+
+    // Test Groq API Key
+    groqTestBtn.addEventListener('click', async () => {
+      const apiKey = groqKeyInput.value.trim();
+      if (!apiKey) {
+        showToast('Please enter your Groq API key first.', 'error');
+        groqKeyInput.focus();
+        return;
+      }
+
+      groqTestBtn.disabled = true;
+      groqTestBtn.textContent = '⏳ Testing...';
+
+      try {
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: groqModelSelect.value || 'llama-3.3-70b-versatile',
+            messages: [
+              { role: 'user', content: 'Respond with the word OK if you receive this.' }
+            ],
+            max_tokens: 5,
+            temperature: 0.1
+          })
+        });
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData?.error?.message || `HTTP ${response.status}: Authentication failed`);
+        }
+
+        const data = await response.json();
+        const reply = data?.choices?.[0]?.message?.content?.trim() || '';
+        showToast(`✅ Groq Connection Verified! Model responded: "${reply}"`, 'success');
+      } catch (err) {
+        console.error('Groq test failed:', err);
+        showToast(`❌ Groq Test Failed: ${err.message}`, 'error');
+      } finally {
+        groqTestBtn.disabled = false;
+        groqTestBtn.textContent = '⚡ Test Groq Connection';
+      }
+    });
+
+    // Generate Dynamic SEO using Groq AI
+    groqGenerateBtn.addEventListener('click', async () => {
+      const apiKey = groqKeyInput.value.trim();
+      if (!apiKey) {
+        showToast('Please enter your Groq API key (starts with gsk_)', 'error');
+        groqKeyInput.focus();
+        return;
+      }
+
+      groqGenerateBtn.disabled = true;
+      groqGenerateBtn.innerHTML = '⏳ Optimizing with Groq AI...';
+      groqStatusMsg.style.display = 'block';
+      groqStatusMsg.style.color = '#f59e0b';
+      groqStatusMsg.textContent = '🤖 Groq AI is analyzing Pakistan utility portals and crafting high-ranking SEO meta tags...';
+
+      try {
+        const prompt = `You are an elite Search Engine Optimization (SEO) director for PowerPulse — the premier Pakistan Electricity Bills & Utility Hub web application and Android app.
+Features to cover:
+- Instant Bill Checking for all 10 DISCO companies: LESCO (Lahore), GEPCO (Gujranwala), FESCO (Faisalabad), IESCO (Islamabad), MEPCO (Multan), PESCO (Peshawar), HESCO (Hyderabad), SEPCO (Sukkur), QESCO (Quetta), TESCO, and K-Electric (Karachi).
+- Electricity Units & Slab Bill Calculator (protected vs non-protected consumers, fuel price adjustment, TV fee, GST).
+- Appliance Wattage & Monthly Energy Consumption Calculator.
+- Direct Offline USSD Package Codes (Jazz, Telenor, Zong, Ufone) and Official DISCO Emergency Helplines.
+- Direct Android APK download with zero spam.
+
+Return ONLY a valid, parseable JSON object with the following fields:
+{
+  "title": "A high-CTR, SEO-optimized title between 50-60 characters featuring PowerPulse and primary keywords",
+  "description": "A compelling meta description between 150-160 characters summarizing bill checking across all DISCOs and utility tools",
+  "keywords": "15-20 comma-separated high-intent search keywords in English and Roman Urdu (e.g. bijli bill check, lesco bill online, iesco bill online, kelectric bill, wapda bill check online, electricity unit calculator)",
+  "og_title": "Social OpenGraph share title for Facebook and WhatsApp",
+  "og_description": "Social OpenGraph description",
+  "twitter_title": "Twitter Card title",
+  "twitter_description": "Twitter Card description",
+  "schema_json": {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "PowerPulse - Pakistan Electricity & Utility Hub",
+    "applicationCategory": "UtilitiesApplication",
+    "operatingSystem": "Android, Web Browser",
+    "description": "Instant electricity bill checking and utility calculators for all Pakistan DISCOs."
+  }
+}`;
+
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: groqModelSelect.value || 'llama-3.3-70b-versatile',
+            response_format: { type: 'json_object' },
+            messages: [
+              {
+                role: 'system',
+                content: 'You are an expert SEO AI assistant. Respond strictly with a JSON object.'
+              },
+              {
+                role: 'user',
+                content: prompt
+              }
+            ],
+            temperature: 0.3
+          })
+        });
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData?.error?.message || `HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        const content = data?.choices?.[0]?.message?.content;
+        const parsed = JSON.parse(content);
+
+        currentSeoData = {
+          ...parsed,
+          model_used: groqModelSelect.value,
+          updated_at: new Date().toISOString()
+        };
+
+        renderSeoFields(currentSeoData);
+
+        groqStatusMsg.style.color = '#10b981';
+        groqStatusMsg.textContent = '✅ Groq AI generated fresh SEO meta tags! Click "Save & Publish" below to activate on website.';
+        showToast('✅ Groq AI successfully generated high-ranking SEO meta tags!', 'success');
+      } catch (err) {
+        console.error('Groq AI SEO generation failed:', err);
+        groqStatusMsg.style.color = '#ef4444';
+        groqStatusMsg.textContent = `❌ Generation failed: ${err.message}`;
+        showToast(`Generation failed: ${err.message}`, 'error');
+      } finally {
+        groqGenerateBtn.disabled = false;
+        groqGenerateBtn.innerHTML = '🚀 Run Groq AI SEO Optimizer';
+      }
+    });
+
+    // Save SEO tags to Supabase
+    saveSeoBtn.addEventListener('click', async () => {
+      saveSeoBtn.disabled = true;
+      saveSeoBtn.textContent = '⏳ Saving & Publishing...';
+
+      const apiKey = groqKeyInput.value.trim();
+      const model = groqModelSelect.value;
+      const title = seoTitleInput.value.trim();
+      const description = seoDescInput.value.trim();
+      const keywords = seoKeywordsInput.value.trim();
+      let schemaJson = seoSchemaInput.value.trim();
+
+      try {
+        let parsedSchema = {};
+        if (schemaJson) {
+          try {
+            parsedSchema = JSON.parse(schemaJson);
+          } catch (e) {
+            parsedSchema = schemaJson;
+          }
+        }
+
+        const updatedSeo = {
+          ...currentSeoData,
+          title: title,
+          description: description,
+          keywords: keywords,
+          schema_json: parsedSchema,
+          updated_at: new Date().toISOString()
+        };
+
+        const upsertPayload = [
+          { key: 'groq_api_key', value: apiKey },
+          { key: 'groq_model', value: model },
+          { key: 'seo_meta_tags', value: JSON.stringify(updatedSeo) },
+          { key: 'meta_title', value: title },
+          { key: 'meta_description', value: description },
+          { key: 'meta_keywords', value: keywords }
+        ];
+
+        const { error } = await supabase.from('site_settings').upsert(upsertPayload, { onConflict: 'key' });
+        if (error) throw error;
+
+        currentSeoData = updatedSeo;
+        serpTitleEl.textContent = title;
+        serpDescEl.textContent = description;
+
+        showToast('🎉 SEO Meta tags published live to PowerPulse website!', 'success');
+      } catch (err) {
+        console.error('Failed to save SEO settings:', err);
+        showToast(`Save failed: ${err.message}`, 'error');
+      } finally {
+        saveSeoBtn.disabled = false;
+        saveSeoBtn.textContent = '💾 Save & Publish SEO Meta Tags to Website';
+      }
+    });
+
+    // Synchronize SERP live preview with manual input edits
+    seoTitleInput.addEventListener('input', () => {
+      serpTitleEl.textContent = seoTitleInput.value.trim() || 'PowerPulse — Check Pakistan Electricity Bills Online';
+    });
+    seoDescInput.addEventListener('input', () => {
+      serpDescEl.textContent = seoDescInput.value.trim() || 'Instant online electricity bill checker for LESCO, IESCO, K-Electric, GEPCO, MEPCO, PESCO.';
+    });
+
+    await loadAllSettings();
 
     testBtn.addEventListener('click', () => {
       const url = urlInput.value.trim() || 'https://bijlibillchecker.pk/privacy.html';

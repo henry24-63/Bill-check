@@ -86,14 +86,28 @@ class ReminderManager(private val context: Context) {
         }
 
         try {
-            alarmManager.setRepeating(
-                AlarmManager.RTC_WAKEUP,
-                calendar.timeInMillis,
-                AlarmManager.INTERVAL_DAY * 30, // Approximate monthly
-                pendingIntent
-            )
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    calendar.timeInMillis,
+                    pendingIntent
+                )
+            } else {
+                alarmManager.setExact(
+                    AlarmManager.RTC_WAKEUP,
+                    calendar.timeInMillis,
+                    pendingIntent
+                )
+            }
         } catch (e: SecurityException) {
-            // Handle missing exact alarm permission gracefully
+            // Fallback if exact alarm requires user toggle
+            try {
+                alarmManager.set(
+                    AlarmManager.RTC_WAKEUP,
+                    calendar.timeInMillis,
+                    pendingIntent
+                )
+            } catch (ignored: Exception) {}
         }
     }
 
@@ -113,10 +127,13 @@ class ReminderManager(private val context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 "bill_reminders",
-                "Bill & Utility Reminders",
+                "PowerPulse Bill & Utility Reminders",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = "Notifications for bill due dates and meter readings"
+                description = "High-priority heads-up alerts for utility bill due dates"
+                enableLights(true)
+                enableVibration(true)
+                lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
             }
             val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)

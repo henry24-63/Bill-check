@@ -37,8 +37,10 @@ fun PrivacyPolicyScreen(
     val adminUrl = repository.getPrivacyPolicyUrl()
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
+                windowInsets = WindowInsets.statusBars,
                 title = { Text("Privacy Policy", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -147,7 +149,7 @@ fun PrivacyPolicyScreen(
                     ) {
                         PolicySection(
                             title = "1. No Personal Data Collection",
-                            body = "Bijli Bill & Utility Checker does not require user accounts, logins, phone numbers, or passwords. We do not harvest, store, or sell your personal information or bill payment history on any centralized database."
+                            body = "PowerPulse does not require user accounts, logins, phone numbers, or passwords. We do not harvest, store, or sell your personal information or bill payment history on any centralized database."
                         )
 
                         Divider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))

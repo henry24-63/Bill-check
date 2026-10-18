@@ -1,6 +1,6 @@
 export const translations = {
   en: {
-    brand_title: "Bijli Bill & Utility Checker",
+    brand_title: "PowerPulse",
     nav_features: "Features",
     nav_download: "Download",
     nav_install: "Installation",
@@ -93,7 +93,7 @@ export const translations = {
 };
 
 export function getCurrentLang() {
-  return localStorage.getItem('app_lang') || 'ur'; // default Urdu for Pakistan
+  return localStorage.getItem('app_lang') || 'en'; // default English
 }
 
 export function setLang(lang) {

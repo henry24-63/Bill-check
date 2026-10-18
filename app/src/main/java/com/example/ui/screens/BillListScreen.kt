@@ -70,8 +70,10 @@ fun BillListScreen(
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
+                windowInsets = WindowInsets.statusBars,
                 title = { 
                     Column {
                         Text("Utility Portals Directory", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)

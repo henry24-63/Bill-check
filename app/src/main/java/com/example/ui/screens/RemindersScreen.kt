@@ -1,6 +1,11 @@
 package com.example.ui.screens
 
+import android.os.Build
+import android.content.pm.PackageManager
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -29,15 +34,30 @@ fun RemindersScreen(repository: ContentRepository, onBack: () -> Unit) {
     var dayInput by remember { mutableStateOf("10") }
     var hourInput by remember { mutableStateOf("9") }
 
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { _ -> }
+
     LaunchedEffect(Unit) {
         repository.incrementStat("reminder_created")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val permissionCheck = ContextCompat.checkSelfPermission(
+                context,
+                android.Manifest.permission.POST_NOTIFICATIONS
+            )
+            if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
+                permissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
     }
 
     BackHandler { onBack() }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
+                windowInsets = WindowInsets.statusBars,
                 title = { Text("Bill & Utility Reminders") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {

@@ -6,11 +6,13 @@ import android.content.ClipboardManager
 import android.content.Context
 import com.example.data.ads.AdActionType
 import com.example.data.ads.SmartAdManager
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -18,6 +20,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -147,20 +151,39 @@ fun HomeScreen(repository: ContentRepository, onNavigate: (String) -> Unit) {
     )
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
+                windowInsets = WindowInsets.statusBars,
                 title = { 
-                    Column {
-                        Text(
-                            "Bijli Bill & Utility Checker", 
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            "Pakistan Electricity & Utility Portals", 
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    Icons.Default.Bolt, 
+                                    contentDescription = null, 
+                                    tint = MaterialTheme.colorScheme.onPrimary, 
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                "PowerPulse", 
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                            Text(
+                                "Pakistan Electricity & Utility Hub", 
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 },
                 actions = {
@@ -178,8 +201,8 @@ fun HomeScreen(repository: ContentRepository, onNavigate: (String) -> Unit) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            contentPadding = PaddingValues(start = 16.dp, top = 2.dp, end = 16.dp, bottom = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             // Live announcement banner from admin
             val announcement = repository.announcements.firstOrNull()
@@ -187,7 +210,7 @@ fun HomeScreen(repository: ContentRepository, onNavigate: (String) -> Unit) {
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(14.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
                     ) {
                         Column(modifier = Modifier.padding(14.dp)) {
@@ -199,18 +222,65 @@ fun HomeScreen(repository: ContentRepository, onNavigate: (String) -> Unit) {
                 }
             }
 
-            // PRIMARY HERO BANNER: Clean, uncluttered card that opens popup on tap
+            // Quick Utility & Portal Chips (1-tap access)
+            item {
+                Column {
+                    Text(
+                        "Quick Select Portal",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(horizontal = 2.dp)
+                    ) {
+                        val popularDiscos = listOf("LESCO", "IESCO", "K-Electric", "MEPCO", "GEPCO", "FESCO", "PESCO", "HESCO")
+                        items(popularDiscos) { discoName ->
+                            val isSelected = selectedLink?.nameEn?.contains(discoName, ignoreCase = true) == true
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = {
+                                    val matched = repository.billLinks.find { it.nameEn.contains(discoName, ignoreCase = true) }
+                                    if (matched != null) {
+                                        selectedLink = matched
+                                    }
+                                    showBillPopup = true
+                                },
+                                label = { Text(discoName, fontWeight = FontWeight.Bold) },
+                                leadingIcon = {
+                                    Icon(Icons.Default.Bolt, contentDescription = null, modifier = Modifier.size(14.dp))
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+
+            // PRIMARY HERO BANNER: Modern Electric Neon Card
             item {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("hero_bill_check_card")
+                        .border(
+                            width = 1.dp,
+                            brush = Brush.horizontalGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.primary,
+                                    MaterialTheme.colorScheme.tertiary.copy(alpha = 0.6f),
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                                )
+                            ),
+                            shape = RoundedCornerShape(20.dp)
+                        )
                         .clickable { showBillPopup = true },
-                    shape = RoundedCornerShape(18.dp),
+                    shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
                     ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
                 ) {
                     Column(modifier = Modifier.padding(18.dp)) {
                         Row(
@@ -218,35 +288,52 @@ fun HomeScreen(repository: ContentRepository, onNavigate: (String) -> Unit) {
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Surface(
-                                shape = RoundedCornerShape(12.dp),
+                                shape = RoundedCornerShape(14.dp),
                                 color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(46.dp)
+                                modifier = Modifier.size(48.dp)
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Icon(
                                         Icons.Default.Bolt, 
                                         contentDescription = null, 
                                         tint = MaterialTheme.colorScheme.onPrimary,
-                                        modifier = Modifier.size(28.dp)
+                                        modifier = Modifier.size(30.dp)
                                     )
                                 }
                             }
                             Spacer(modifier = Modifier.width(14.dp))
                             Column(modifier = Modifier.weight(1f)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        "Instant Bill Checker", 
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.ExtraBold
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Surface(
+                                        shape = RoundedCornerShape(6.dp),
+                                        color = MaterialTheme.colorScheme.primaryContainer,
+                                        modifier = Modifier.padding(2.dp)
+                                    ) {
+                                        Text(
+                                            "POPUP",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(2.dp))
                                 Text(
-                                    "Check Electricity Bill", 
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    "Auto-fill reference & search instant portal", 
+                                    "Auto-fill 14-digit ref & open official bill", 
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(14.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
 
                         // Quick access button to open popup
                         Button(
@@ -254,13 +341,16 @@ fun HomeScreen(repository: ContentRepository, onNavigate: (String) -> Unit) {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .testTag("open_bill_popup_button"),
-                            shape = RoundedCornerShape(12.dp),
-                            contentPadding = PaddingValues(vertical = 12.dp)
+                            shape = RoundedCornerShape(14.dp),
+                            contentPadding = PaddingValues(vertical = 13.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
                         ) {
-                            Icon(Icons.Default.Bolt, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Icon(Icons.Default.Bolt, contentDescription = null, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                "⚡ Check Bill Now (Pop-up)",
+                                "⚡ Check Bill Now (Auto-Fill & Search)",
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold
                             )
@@ -269,31 +359,45 @@ fun HomeScreen(repository: ContentRepository, onNavigate: (String) -> Unit) {
                         // Saved reference shortcut indicator if available
                         val lastRef = repository.getLastRefNumber()
                         if (lastRef.isNotEmpty()) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center,
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                Icon(
-                                    Icons.Default.History, 
-                                    contentDescription = null, 
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(14.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    "Saved Ref: $lastRef",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center,
+                                    modifier = Modifier.padding(vertical = 6.dp, horizontal = 12.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.History, 
+                                        contentDescription = null, 
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(15.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        "Last Used Ref: $lastRef",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
 
-            // DISTINCT SERVICES GRID (No duplicate options)
+            // Dynamic Smart Ad Rotation: Inline feed card when rotated away from bottom bar
+            if (SmartAdManager.currentPlacement == com.example.data.ads.AdPlacement.INLINE_FEED) {
+                item {
+                    com.example.data.ads.InlineSponsoredCard(repository = repository)
+                }
+            }
+
+            // DISTINCT SERVICES GRID (Modern Electric Cards)
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -306,10 +410,10 @@ fun HomeScreen(repository: ContentRepository, onNavigate: (String) -> Unit) {
                         fontWeight = FontWeight.Bold
                     )
                     TextButton(onClick = { onNavigate("bills") }) {
-                        Text("View All Portals")
+                        Text("View All Portals ↗", fontWeight = FontWeight.SemiBold)
                     }
                 }
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
                 val chunkedServices = services.chunked(2)
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -322,6 +426,11 @@ fun HomeScreen(repository: ContentRepository, onNavigate: (String) -> Unit) {
                                 Card(
                                     modifier = Modifier
                                         .weight(1f)
+                                        .border(
+                                            width = 1.dp,
+                                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
+                                            shape = RoundedCornerShape(16.dp)
+                                        )
                                         .clickable { 
                                             val activity = context as? Activity
                                             if (activity != null) {
@@ -332,19 +441,22 @@ fun HomeScreen(repository: ContentRepository, onNavigate: (String) -> Unit) {
                                                 item.onClick()
                                             }
                                         },
-                                    shape = RoundedCornerShape(14.dp),
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                                    ),
                                     elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                                 ) {
                                     Row(
                                         modifier = Modifier
                                             .fillMaxSize()
-                                            .padding(12.dp),
+                                            .padding(14.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Surface(
-                                            shape = RoundedCornerShape(10.dp),
+                                            shape = RoundedCornerShape(12.dp),
                                             color = MaterialTheme.colorScheme.primaryContainer,
-                                            modifier = Modifier.size(40.dp)
+                                            modifier = Modifier.size(42.dp)
                                         ) {
                                             Box(contentAlignment = Alignment.Center) {
                                                 Icon(
@@ -355,12 +467,12 @@ fun HomeScreen(repository: ContentRepository, onNavigate: (String) -> Unit) {
                                                 )
                                             }
                                         }
-                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Spacer(modifier = Modifier.width(12.dp))
                                         Column(modifier = Modifier.weight(1f)) {
                                             Text(
                                                 item.title, 
                                                 style = MaterialTheme.typography.bodyMedium,
-                                                fontWeight = FontWeight.SemiBold,
+                                                fontWeight = FontWeight.Bold,
                                                 maxLines = 1
                                             )
                                             Spacer(modifier = Modifier.height(2.dp))

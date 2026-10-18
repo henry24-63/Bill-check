@@ -36,8 +36,10 @@ fun CalculatorScreen(repository: ContentRepository, onBack: () -> Unit) {
     BackHandler { onBack() }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
+                windowInsets = WindowInsets.statusBars,
                 title = { Text("Electricity Bill Calculator") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -48,7 +50,7 @@ fun CalculatorScreen(repository: ContentRepository, onBack: () -> Unit) {
                     if (calculationResult != null) {
                         IconButton(onClick = {
                             val res = calculationResult!!
-                            val shareText = "Bill Estimate for ${res.tariffName} (${res.units} units):\nTotal: Rs. ${res.total}\n(Estimate only - Bijli Bill Checker)"
+                            val shareText = "Bill Estimate for ${res.tariffName} (${res.units} units):\nTotal: Rs. ${res.total}\n(Estimate generated via PowerPulse)"
                             val intent = Intent(Intent.ACTION_SEND).apply {
                                 type = "text/plain"
                                 putExtra(Intent.EXTRA_TEXT, shareText)

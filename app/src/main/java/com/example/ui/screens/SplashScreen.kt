@@ -56,7 +56,9 @@ fun SplashScreen(
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
             Text("⚡", style = MaterialTheme.typography.displayLarge)
             Spacer(modifier = Modifier.height(16.dp))
-            Text("Bijli Bill & Utility Checker", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
+            Text("PowerPulse", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text("Smart Electricity & Utility Suite", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(24.dp))
             CircularProgressIndicator()
             Spacer(modifier = Modifier.height(16.dp))

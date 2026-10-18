@@ -44,6 +44,11 @@ enum class AdProviderMode {
     BOTH
 }
 
+enum class AdPlacement {
+    BOTTOM_BAR,
+    INLINE_FEED
+}
+
 object SmartAdManager {
     private const val TAG = "SmartAdManager"
 
@@ -59,6 +64,17 @@ object SmartAdManager {
     private var totalUserClicks = 0
     private var lastAdShownTimestamp: Long = 0L
     private var aiDecisionCounter = 0
+
+    // Dynamic placement state: alternates between bottom bar and inline card
+    var currentPlacement by mutableStateOf(AdPlacement.BOTTOM_BAR)
+
+    fun rotatePlacement() {
+        currentPlacement = if (currentPlacement == AdPlacement.BOTTOM_BAR) {
+            AdPlacement.INLINE_FEED
+        } else {
+            AdPlacement.BOTTOM_BAR
+        }
+    }
 
     // State for Adsterra interactive pop-up dialog
     var adsterraPopupUrl by mutableStateOf<String?>(null)
@@ -481,3 +497,101 @@ fun AdsterraPopupDialog() {
         }
     }
 }
+
+/**
+ * Inline Sponsored Card that embeds seamlessly between feed content
+ * when Smart AI alternates position away from bottom bar.
+ */
+@Composable
+fun InlineSponsoredCard(repository: ContentRepository, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val adsEnabled = repository.siteSettings.find { 
+        it.key.equals("ads_enabled", ignoreCase = true) 
+    }?.value?.toBooleanStrictOrNull() ?: repository.adConfig?.adsEnabled ?: true
+
+    if (!adsEnabled) return
+
+    val providerMode = SmartAdManager.getProviderMode(repository)
+    val adsterraBannerUrl = SmartAdManager.getAdsterraBannerUrl(repository)
+    val admobBannerId = SmartAdManager.getAdMobBannerId(repository)
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Text(
+                        "Sponsored Partner ⚡",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                    )
+                }
+                Text(
+                    "ADVERTISEMENT",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(55.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                if (providerMode == AdProviderMode.ADSTERRA && adsterraBannerUrl.isNotEmpty()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clickable {
+                                try {
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(adsterraBannerUrl))
+                                    context.startActivity(intent)
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            },
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            "Special Partner Offer — Tap to view promotions",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Icon(Icons.Default.OpenInNew, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                    }
+                } else {
+                    AndroidView(
+                        modifier = Modifier.fillMaxWidth(),
+                        factory = { ctx ->
+                            AdView(ctx).apply {
+                                setAdSize(AdSize.BANNER)
+                                adUnitId = admobBannerId
+                                loadAd(AdRequest.Builder().build())
+                            }
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+

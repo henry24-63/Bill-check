@@ -29,8 +29,10 @@ fun SettingsScreen(
     BackHandler { onBack() }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
+                windowInsets = WindowInsets.statusBars,
                 title = { Text("Settings & About", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -104,7 +106,7 @@ fun SettingsScreen(
                             modifier = Modifier.clickable {
                                 val intent = Intent(Intent.ACTION_SEND).apply {
                                     type = "text/plain"
-                                    putExtra(Intent.EXTRA_TEXT, "Check Pakistan Electricity Bills & Utilities with Bijli Bill Checker: https://bijlibillchecker.pk")
+                                    putExtra(Intent.EXTRA_TEXT, "Check Pakistan Electricity Bills & Utilities with PowerPulse: Instant Bill Checking & Smart Calculators.")
                                 }
                                 context.startActivity(Intent.createChooser(intent, "Share App"))
                             }

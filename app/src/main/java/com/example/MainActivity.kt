@@ -6,10 +6,16 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -47,16 +53,30 @@ class MainActivity : ComponentActivity() {
                                        currentRoute?.startsWith("maintenance") != true
 
                 Scaffold(
+                    contentWindowInsets = WindowInsets(0, 0, 0, 0),
                     bottomBar = {
-                        if (shouldShowBanner) {
-                            SmartBannerAdView(repository = repository)
+                        if (shouldShowBanner && SmartAdManager.currentPlacement == com.example.data.ads.AdPlacement.BOTTOM_BAR) {
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                color = androidx.compose.material3.MaterialTheme.colorScheme.surface,
+                                tonalElevation = 3.dp
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .navigationBarsPadding(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    SmartBannerAdView(repository = repository)
+                                }
+                            }
                         }
                     }
                 ) { padding ->
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(padding)
+                            .padding(bottom = padding.calculateBottomPadding())
                     ) {
                         NavHost(navController = navController, startDestination = "splash") {
                             composable("splash") {

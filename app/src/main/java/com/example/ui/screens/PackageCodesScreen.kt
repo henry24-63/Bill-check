@@ -35,8 +35,10 @@ fun PackageCodesScreen(repository: ContentRepository, onBack: () -> Unit) {
     val filtered = codes.filter { selectedTelco == "All" || it.telco == selectedTelco }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
+                windowInsets = WindowInsets.statusBars,
                 title = { Text("USSD Package Codes") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {

@@ -33,9 +33,25 @@
             </div>
           </div>
 
+          <!-- Interactive APK Direct File Uploader -->
+          <div class="form-group" style="background: rgba(16, 185, 129, 0.08); padding: 16px; border-radius: 12px; border: 1px dashed #10b981; margin: 15px 0;">
+            <label style="font-weight: 700; color: #10b981; display: flex; align-items: center; gap: 8px;">
+              📦 Upload New APK Release (Auto-Deletes Older Builds)
+            </label>
+            <input type="file" id="apk_file_input" accept=".apk" style="margin-top: 8px; width: 100%;">
+            <div id="upload_status" style="margin-top: 8px; font-size: 0.85rem; color: #94a3b8;">
+              Select a .apk file to upload. Older versions in storage will automatically be purged.
+            </div>
+            <div id="upload_progress_container" style="display: none; margin-top: 10px;">
+              <div style="background: #1e293b; border-radius: 6px; overflow: hidden; height: 8px;">
+                <div id="upload_progress_bar" style="background: #10b981; width: 0%; height: 100%; transition: width 0.2s;"></div>
+              </div>
+            </div>
+          </div>
+
           <div class="form-group">
-            <label>APK URL</label>
-            <input type="url" id="apk_url" required>
+            <label>Active APK Download URL (Direct Link for Website Users)</label>
+            <input type="url" id="apk_url" required placeholder="https://.../PowerPulse.apk">
           </div>
 
           <h3 style="margin-top: 20px;">🤖 Smart Ad System Configuration</h3>
@@ -121,31 +137,104 @@
       document.getElementById('maintenance_mode').checked = data.maintenance_mode || false;
     }
 
+    const fileInput = document.getElementById('apk_file_input');
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files[0];
+      if (file) {
+        const mb = (file.size / (1024 * 1024)).toFixed(1);
+        document.getElementById('apk_size_mb').value = mb;
+        document.getElementById('upload_status').textContent = `Ready: ${file.name} (${mb} MB)`;
+      }
+    });
+
     form.onsubmit = async (e) => {
       e.preventDefault();
-      const payload = {
-        latest_version_code: Number(document.getElementById('latest_version_code').value),
-        latest_version_name: document.getElementById('latest_version_name').value,
-        min_version_code: Number(document.getElementById('min_version_code').value),
-        apk_size_mb: Number(document.getElementById('apk_size_mb').value),
-        apk_url: document.getElementById('apk_url').value,
-        ad_provider: document.getElementById('ad_provider').value,
-        ad_mode: document.getElementById('ad_mode').value,
-        admob_app_id: document.getElementById('admob_app_id').value,
-        admob_banner_id: document.getElementById('admob_banner_id').value,
-        admob_interstitial_id: document.getElementById('admob_interstitial_id').value,
-        adsterra_url: document.getElementById('adsterra_url').value,
-        changelog: document.getElementById('changelog').value,
-        maintenance_mode: document.getElementById('maintenance_mode').checked,
-        updated_at: new Date().toISOString()
-      };
+      const statusEl = document.getElementById('upload_status');
+      const progressContainer = document.getElementById('upload_progress_container');
+      const progressBar = document.getElementById('upload_progress_bar');
+      const submitBtn = form.querySelector('button[type="submit"]');
+
+      let finalApkUrl = document.getElementById('apk_url').value;
+      const file = fileInput.files[0];
 
       try {
+        if (file) {
+          submitBtn.disabled = true;
+          progressContainer.style.display = 'block';
+          progressBar.style.width = '20%';
+          statusEl.textContent = 'Purging previous APK files from storage bucket...';
+
+          // 1. Automatically delete old APK versions from bucket
+          try {
+            const { data: existingFiles } = await supabase.storage.from('apk-releases').list('');
+            if (existingFiles && existingFiles.length > 0) {
+              const fileNames = existingFiles.map(f => f.name);
+              await supabase.storage.from('apk-releases').remove(fileNames);
+            }
+          } catch (cleanErr) {
+            console.warn('Storage purge non-fatal notice:', cleanErr);
+          }
+
+          progressBar.style.width = '50%';
+          statusEl.textContent = 'Uploading new APK release...';
+
+          const vCode = document.getElementById('latest_version_code').value || '1';
+          const cleanFileName = `PowerPulse_v${vCode}_${Date.now()}.apk`;
+
+          // 2. Upload new version file
+          const { data: uploadData, error: uploadErr } = await supabase.storage
+            .from('apk-releases')
+            .upload(cleanFileName, file, {
+              cacheControl: '3600',
+              upsert: true
+            });
+
+          if (uploadErr) {
+            throw new Error(`APK Upload Error: ${uploadErr.message}`);
+          }
+
+          progressBar.style.width = '85%';
+          statusEl.textContent = 'Publishing direct download URL...';
+
+          // 3. Obtain public download link
+          const { data: publicUrlData } = supabase.storage
+            .from('apk-releases')
+            .getPublicUrl(cleanFileName);
+
+          if (publicUrlData && publicUrlData.publicUrl) {
+            finalApkUrl = publicUrlData.publicUrl;
+            document.getElementById('apk_url').value = finalApkUrl;
+          }
+
+          progressBar.style.width = '100%';
+          statusEl.textContent = 'APK uploaded and previous builds purged successfully!';
+        }
+
+        const payload = {
+          latest_version_code: Number(document.getElementById('latest_version_code').value),
+          latest_version_name: document.getElementById('latest_version_name').value,
+          min_version_code: Number(document.getElementById('min_version_code').value),
+          apk_size_mb: Number(document.getElementById('apk_size_mb').value),
+          apk_url: finalApkUrl,
+          ad_provider: document.getElementById('ad_provider').value,
+          ad_mode: document.getElementById('ad_mode').value,
+          admob_app_id: document.getElementById('admob_app_id').value,
+          admob_banner_id: document.getElementById('admob_banner_id').value,
+          admob_interstitial_id: document.getElementById('admob_interstitial_id').value,
+          adsterra_url: document.getElementById('adsterra_url').value,
+          changelog: document.getElementById('changelog').value,
+          maintenance_mode: document.getElementById('maintenance_mode').checked,
+          updated_at: new Date().toISOString()
+        };
+
         const { error } = await supabase.from('app_config').update(payload).eq('id', 1);
         if (error) throw error;
-        showToast('App config saved successfully! (Published)');
+        showToast('App config & APK release published successfully! (Older builds deleted)');
       } catch (err) {
         showToast(`Save failed: ${err.message}`, 'error');
+        statusEl.textContent = `Error: ${err.message}`;
+      } finally {
+        submitBtn.disabled = false;
       }
     };
 

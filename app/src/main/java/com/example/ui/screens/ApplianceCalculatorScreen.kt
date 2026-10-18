@@ -30,8 +30,10 @@ fun ApplianceCalculatorScreen(repository: ContentRepository, onBack: () -> Unit)
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
+                windowInsets = WindowInsets.statusBars,
                 title = { Text("Appliance Calculator") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {

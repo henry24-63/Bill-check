@@ -36,8 +36,10 @@ fun HelplinesScreen(repository: ContentRepository, onBack: () -> Unit) {
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
+                windowInsets = WindowInsets.statusBars,
                 title = { Text("Helplines Directory") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {

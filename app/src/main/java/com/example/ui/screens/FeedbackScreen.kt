@@ -23,8 +23,10 @@ fun FeedbackScreen(onBack: () -> Unit) {
     BackHandler { onBack() }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
+                windowInsets = WindowInsets.statusBars,
                 title = { Text("Send Feedback") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
