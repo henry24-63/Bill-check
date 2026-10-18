@@ -84,6 +84,11 @@ object SmartAdManager {
     fun initialize(context: Context) {
         if (isInitialized) return
         try {
+            val requestConfig = RequestConfiguration.Builder()
+                .setTestDeviceIds(listOf(AdRequest.DEVICE_ID_EMULATOR))
+                .build()
+            MobileAds.setRequestConfiguration(requestConfig)
+
             MobileAds.initialize(context) { status ->
                 Log.d(TAG, "AdMob MobileAds initialized: ${status.adapterStatusMap}")
             }
